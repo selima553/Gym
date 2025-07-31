@@ -459,8 +459,9 @@
       selimData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.set - b.set);
       friendData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.set - b.set);
 
-      // Chart data points: x = reps, y = weight
-      // We add labels as "date set#" for tooltip clarity
+      // Limit to last 50 sets each to reduce lag
+      const selimLimited = selimData.slice(-50);
+      const friendLimited = friendData.slice(-50);
 
       function mapData(arr) {
         return arr.map(e => ({
@@ -473,7 +474,7 @@
       const datasets = [
         {
           label: 'Selim',
-          data: mapData(selimData),
+          data: mapData(selimLimited),
           backgroundColor: 'rgba(233, 30, 99, 0.7)',
           borderColor: 'rgba(233, 30, 99, 1)',
           borderWidth: 1,
@@ -482,7 +483,7 @@
         },
         {
           label: 'Friend',
-          data: mapData(friendData),
+          data: mapData(friendLimited),
           backgroundColor: 'rgba(33, 150, 243, 0.7)',
           borderColor: 'rgba(33, 150, 243, 1)',
           borderWidth: 1,
