@@ -1,357 +1,250 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Workout Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gym Workout Logger</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 30px auto;
-      background: #f7f7f7;
-      padding: 20px;
-      border-radius: 10px;
+      font-family: sans-serif;
+      padding: 10px;
+      margin: 0;
+      background: #f9f9f9;
     }
+
     h1, h2 {
       text-align: center;
     }
-    select, input, button {
-      display: block;
-      width: 100%;
-      margin: 10px 0;
-      padding: 8px;
+
+    input, select, button {
+      margin: 5px 0;
+      padding: 10px;
       font-size: 16px;
+      width: 100%;
+      box-sizing: border-box;
     }
-    .user-toggle {
-      display: flex;
-      justify-content: space-around;
+
+    button {
+      cursor: pointer;
     }
-    .user-toggle button {
-      width: 45%;
-      padding: 10px;
+
+    #setDetails {
+      margin-top: 10px;
     }
-    .hidden {
-      display: none;
+
+    #logList, #historyList {
+      list-style-type: none;
+      padding-left: 0;
     }
-    #timer {
-      font-size: 2em;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .log, .history {
+
+    li {
       background: #fff;
+      margin-bottom: 5px;
       padding: 10px;
-      border-radius: 8px;
-      margin-top: 20px;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    .tabs {
+
+    .button-group {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 15px;
+      gap: 10px;
+      margin: 10px 0;
     }
-    .tabs button {
-      width: 48%;
-      padding: 12px;
-      font-size: 16px;
+
+    @media (min-width: 600px) {
+      .button-group button {
+        width: 48%;
+      }
     }
-    .history-date {
-      font-weight: bold;
-      margin-top: 10px;
-      padding: 5px;
-      background-color: #eee;
-      border-radius: 5px;
-    }
+
     #maxWeightDisplay {
+      margin: 10px 0;
       font-weight: bold;
       text-align: center;
-      margin: 10px 0;
     }
   </style>
 </head>
 <body>
 
-<h1>Workout Logger</h1>
+  <h1>🏋️ Workout Logger</h1>
 
-<div class="tabs">
-  <button onclick="showTab('workoutTab')">🏋️ Workout</button>
-  <button onclick="showTab('historyTab')">📅 History</button>
-</div>
-
-<!-- Workout Tab -->
-<div id="workoutTab">
-  <h2>1. Select or Add Exercise</h2>
   <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
     <option value="">-- Select Exercise --</option>
   </select>
-  <input type="text" id="newExercise" placeholder="New exercise name">
+  <input type="text" id="newExercise" placeholder="Add new exercise" />
   <button onclick="addExercise()">Add Exercise</button>
-
   <div id="maxWeightDisplay"></div>
 
-  <h2>2. Who's Doing the Set?</h2>
-  <div class="user-toggle">
-    <button onclick="selectUser('Selim')">Selim</button>
-    <button onclick="selectUser('Friend')">Friend</button>
+  <div class="button-group">
+    <button onclick="startSet('Selim')">Selim</button>
+    <button onclick="startSet('Friend')">Friend</button>
   </div>
 
-  <div id="setForm" class="hidden">
-    <h2>3. Log Set (<span id="setCountDisplay">Set 1</span>)</h2>
-    <label>Weight (kg):</label>
-    <input type="number" id="weightInput">
-    <label>Reps:</label>
-    <input type="number" id="repsInput">
-    <label>How hard? (RPE 1-10)</label>
-    <input type="number" id="rpeInput" min="1" max="10">
+  <div id="setDetails" style="display:none;">
+    <p id="setInfo"></p>
+    <input type="number" id="weight" placeholder="Weight (kg)">
+    <input type="number" id="reps" placeholder="Reps">
+    <input type="number" id="rpe" placeholder="RPE (1-10)">
+    <input type="number" id="rest" placeholder="Rest (seconds)">
     <button onclick="submitSet()">Submit Set</button>
   </div>
 
-  <div id="restForm" class="hidden">
-    <h2>4. Rest Time (seconds)</h2>
-    <input type="number" id="restInput" placeholder="e.g. 60">
-    <button onclick="startRest()">Start Rest</button>
-    <div id="timer"></div>
-  </div>
+  <h2>Today's Log</h2>
+  <ul id="logList"></ul>
 
-  <div class="hidden" id="nextSetPrompt">
-    <h2>Next Set</h2>
-    <button onclick="startNextSet()">Continue</button>
-    <button onclick="endExercise()">Finish Exercise</button>
-  </div>
+  <h2>Full History</h2>
+  <ul id="historyList"></ul>
 
-  <div class="log" id="logOutput">
-    <h3>Workout Log:</h3>
-    <ul id="logList"></ul>
-  </div>
-</div>
+  <script>
+    const today = new Date().toISOString().split("T")[0];
+    const lastSavedDate = localStorage.getItem("lastWorkoutDate");
 
-<!-- History Tab -->
-<div id="historyTab" class="hidden">
-  <div class="history">
-    <h2>Workout History</h2>
-    <div id="historyOutput"></div>
-  </div>
-</div>
+    let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
+    let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
 
-<script>
-  let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
-  let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
+    let setCounts = { Selim: 1, Friend: 1 };
+    let currentExercise = '';
+    let currentUser = '';
 
-  let currentExercise = '';
-  let currentUser = '';
-  let setCounts = { Selim: 1, Friend: 1 };
-
-  function getToday() {
-    return new Date().toISOString().split("T")[0];
-  }
-
-  // Reset set counts daily (but keep logs)
-  const today = getToday();
-  const lastDate = localStorage.getItem("lastWorkoutDate");
-  if (lastDate !== today) {
-    localStorage.setItem("lastWorkoutDate", today);
-    setCounts = { Selim: 1, Friend: 1 };
-    localStorage.setItem("setCounts", JSON.stringify(setCounts));
-  } else {
-    const savedCounts = JSON.parse(localStorage.getItem("setCounts"));
-    if (savedCounts) setCounts = savedCounts;
-  }
-
-  function updateSetCountDisplay() {
-    document.getElementById('setCountDisplay').textContent = `Set ${setCounts[currentUser]}`;
-  }
-
-  function addExercise() {
-    const name = document.getElementById('newExercise').value.trim();
-    if (name && !exercises.includes(name)) {
-      exercises.push(name);
-      localStorage.setItem("exercises", JSON.stringify(exercises));
-      const option = document.createElement('option');
-      option.value = name;
-      option.text = name;
-      document.getElementById('exerciseSelect').appendChild(option);
-      document.getElementById('exerciseSelect').value = name;
-      handleExerciseChange(name);
-      document.getElementById('newExercise').value = '';
-    }
-  }
-
-  function handleExerciseChange(selected) {
-    currentExercise = selected;
-    updateMaxWeightDisplay(selected);
-  }
-
-  function updateMaxWeightDisplay(exerciseName) {
-    if (!exerciseName) {
-      document.getElementById('maxWeightDisplay').textContent = '';
-      return;
+    if (lastSavedDate !== today) {
+      localStorage.setItem("lastWorkoutDate", today);
+      setCounts = { Selim: 1, Friend: 1 };
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('logList').innerHTML = '';
+      });
     }
 
-    let selimMax = 0;
-    let friendMax = 0;
-
-    for (let entry of workoutLog) {
-      if (entry.exercise === exerciseName) {
-        const weight = parseFloat(entry.weight);
-        if (entry.user === 'Selim' && weight > selimMax) selimMax = weight;
-        if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
+    function addExercise() {
+      const name = document.getElementById('newExercise').value.trim();
+      if (name && !exercises.includes(name)) {
+        exercises.push(name);
+        localStorage.setItem("exercises", JSON.stringify(exercises));
+        const select = document.getElementById('exerciseSelect');
+        const option = document.createElement('option');
+        option.value = name;
+        option.text = name;
+        select.appendChild(option);
+        select.value = name;
+        handleExerciseChange(name);
+        document.getElementById('newExercise').value = '';
       }
     }
 
-    document.getElementById('maxWeightDisplay').textContent =
-      `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
-  }
-
-  function selectUser(name) {
-    if (!currentExercise) {
-      alert("Please select an exercise first.");
-      return;
-    }
-    currentUser = name;
-    updateSetCountDisplay();
-    document.getElementById('setForm').classList.remove('hidden');
-  }
-
-  function submitSet() {
-    const weight = document.getElementById('weightInput').value;
-    const reps = document.getElementById('repsInput').value;
-    const rpe = document.getElementById('rpeInput').value;
-    if (!weight || !reps || !rpe) {
-      alert("Please fill in all set fields.");
-      return;
+    function handleExerciseChange(selected) {
+      currentExercise = selected;
+      updateMaxWeightDisplay(selected);
     }
 
-    const setNumber = setCounts[currentUser];
-    const date = getToday();
+    function startSet(user) {
+      if (!currentExercise) {
+        alert("Please select an exercise first.");
+        return;
+      }
+      currentUser = user;
+      document.getElementById('setInfo').textContent = `User: ${user}, Set: ${setCounts[user]}`;
+      document.getElementById('setDetails').style.display = 'block';
+    }
 
-    const entry = {
-      user: currentUser,
-      exercise: currentExercise,
-      set: setNumber,
-      weight,
-      reps,
-      rpe,
-      date
+    function submitSet() {
+      const weight = document.getElementById('weight').value;
+      const reps = document.getElementById('reps').value;
+      const rpe = document.getElementById('rpe').value;
+      const rest = document.getElementById('rest').value;
+
+      const entry = {
+        user: currentUser,
+        exercise: currentExercise,
+        set: setCounts[currentUser],
+        weight,
+        reps,
+        rpe,
+        rest,
+        date: today
+      };
+
+      workoutLog.push(entry);
+      localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
+
+      renderLogItem(entry);
+      setCounts[currentUser]++;
+      updateMaxWeightDisplay(currentExercise);
+
+      document.getElementById('weight').value = '';
+      document.getElementById('reps').value = '';
+      document.getElementById('rpe').value = '';
+      document.getElementById('rest').value = '';
+      document.getElementById('setDetails').style.display = 'none';
+    }
+
+    function renderLogItem(entry) {
+      const list = document.getElementById('logList');
+      const item = document.createElement('li');
+      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe}) - Rest ${entry.rest}s`;
+      list.appendChild(item);
+    }
+
+    function updateMaxWeightDisplay(exerciseName) {
+      if (!exerciseName) {
+        document.getElementById('maxWeightDisplay').textContent = '';
+        return;
+      }
+
+      let selimMax = 0;
+      let friendMax = 0;
+
+      for (let entry of workoutLog) {
+        if (entry.exercise === exerciseName) {
+          const weight = parseFloat(entry.weight);
+          if (entry.user === 'Selim' && weight > selimMax) selimMax = weight;
+          if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
+        }
+      }
+
+      document.getElementById('maxWeightDisplay').textContent = 
+        `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
+    }
+
+    function renderTodayOnlyLog() {
+      const list = document.getElementById('logList');
+      list.innerHTML = '';
+      for (let entry of workoutLog) {
+        if (entry.date === today) {
+          renderLogItem(entry);
+          if (setCounts[entry.user] <= entry.set) {
+            setCounts[entry.user] = entry.set + 1;
+          }
+        }
+      }
+    }
+
+    function loadSavedExercises() {
+      const select = document.getElementById('exerciseSelect');
+      for (let name of exercises) {
+        const option = document.createElement('option');
+        option.value = name;
+        option.text = name;
+        select.appendChild(option);
+      }
+    }
+
+    window.onload = () => {
+      loadSavedExercises();
+      renderTodayOnlyLog();
+      renderHistory();
     };
 
-    workoutLog.push(entry);
-    localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-    localStorage.setItem("setCounts", JSON.stringify(setCounts));
-    renderLogItem(entry);
-    updateMaxWeightDisplay(currentExercise);
-
-    setCounts[currentUser]++;
-    document.getElementById('setForm').classList.add('hidden');
-    document.getElementById('restForm').classList.remove('hidden');
-  }
-
-  function startRest() {
-    const seconds = parseInt(document.getElementById('restInput').value);
-    if (isNaN(seconds) || seconds <= 0) {
-      alert("Enter a valid rest time.");
-      return;
-    }
-
-    let time = seconds;
-    const timer = document.getElementById('timer');
-    timer.textContent = time + "s";
-    document.getElementById('restInput').disabled = true;
-
-    const interval = setInterval(() => {
-      time--;
-      timer.textContent = time + "s";
-      if (time <= 0) {
-        clearInterval(interval);
-        document.getElementById('restForm').classList.add('hidden');
-        document.getElementById('restInput').disabled = false;
-        document.getElementById('timer').textContent = "";
-        document.getElementById('nextSetPrompt').classList.remove('hidden');
+    function renderHistory() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = '';
+      for (let entry of workoutLog) {
+        const item = document.createElement('li');
+        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe}) - Rest ${entry.rest}s`;
+        historyList.appendChild(item);
       }
-    }, 1000);
-  }
-
-  function startNextSet() {
-    document.getElementById('weightInput').value = '';
-    document.getElementById('repsInput').value = '';
-    document.getElementById('rpeInput').value = '';
-    document.getElementById('restInput').value = '';
-    document.getElementById('nextSetPrompt').classList.add('hidden');
-    updateSetCountDisplay();
-    document.getElementById('setForm').classList.remove('hidden');
-  }
-
-  function endExercise() {
-    alert("Exercise complete!");
-    document.getElementById('nextSetPrompt').classList.add('hidden');
-    document.getElementById('setForm').classList.add('hidden');
-    document.getElementById('restForm').classList.add('hidden');
-    currentExercise = '';
-    currentUser = '';
-    document.getElementById('exerciseSelect').value = '';
-    document.getElementById('maxWeightDisplay').textContent = '';
-  }
-
-  function renderLogItem(entry) {
-    const li = document.createElement('li');
-    li.textContent = `${entry.user} - ${entry.exercise} Set ${entry.set}: ${entry.weight}kg x ${entry.reps} reps (RPE: ${entry.rpe})`;
-    document.getElementById('logList').appendChild(li);
-  }
-
-  function renderHistory() {
-    const historyOutput = document.getElementById('historyOutput');
-    historyOutput.innerHTML = '';
-
-    const grouped = {};
-    for (let entry of workoutLog) {
-      if (!grouped[entry.date]) grouped[entry.date] = [];
-      grouped[entry.date].push(entry);
     }
-
-    const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
-    for (let date of sortedDates) {
-      const div = document.createElement('div');
-      const dateTitle = document.createElement('div');
-      dateTitle.textContent = date;
-      dateTitle.className = 'history-date';
-      div.appendChild(dateTitle);
-
-      const ul = document.createElement('ul');
-      for (let entry of grouped[date]) {
-        const li = document.createElement('li');
-        li.textContent = `${entry.user} - ${entry.exercise} Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE: ${entry.rpe})`;
-        ul.appendChild(li);
-      }
-      div.appendChild(ul);
-      historyOutput.appendChild(div);
-    }
-  }
-
-  function showTab(tabId) {
-    document.getElementById('workoutTab').classList.add('hidden');
-    document.getElementById('historyTab').classList.add('hidden');
-    document.getElementById(tabId).classList.remove('hidden');
-    if (tabId === 'historyTab') renderHistory();
-  }
-
-  function loadSavedExercises() {
-    for (let name of exercises) {
-      const option = document.createElement('option');
-      option.value = name;
-      option.text = name;
-      document.getElementById('exerciseSelect').appendChild(option);
-    }
-  }
-
-  function loadSavedLog() {
-    for (let entry of workoutLog) {
-      renderLogItem(entry);
-    }
-  }
-
-  window.onload = () => {
-    loadSavedExercises();
-    loadSavedLog();
-  };
-</script>
+  </script>
 
 </body>
 </html>
