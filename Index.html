@@ -10,6 +10,9 @@
       background: #f7f7f7;
       margin: 0;
       padding: 10px;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     h1 {
@@ -19,15 +22,30 @@
 
     nav {
       display: flex;
-      justify-content: center;
+      justify-content: space-around;
       margin-bottom: 15px;
+      position: sticky;
+      top: 0;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      z-index: 100;
     }
 
     nav button {
       flex: 1;
-      padding: 10px;
-      margin: 0 5px;
+      padding: 12px 0;
       font-size: 16px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: border-color 0.3s;
+    }
+
+    nav button.active {
+      border-bottom: 3px solid #2196f3;
+      font-weight: bold;
+      color: #2196f3;
     }
 
     section {
@@ -44,11 +62,13 @@
       margin: 8px 0;
       padding: 10px;
       font-size: 16px;
+      box-sizing: border-box;
     }
 
     #logList, #historyList {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
 
     li {
@@ -58,6 +78,7 @@
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       position: relative;
+      word-break: break-word;
     }
 
     .user-buttons {
@@ -105,24 +126,35 @@
     }
 
     /* Indentation for grouping */
+    .date-header {
+      font-weight: bold;
+      margin-top: 15px;
+      background: #d6eaf8;
+      padding: 8px;
+      border-radius: 5px;
+      font-size: 1.1em;
+    }
+
     .user-header {
       font-weight: bold;
       margin-top: 10px;
       background: #d0f0fd;
       padding: 8px;
       border-radius: 5px;
+      margin-left: 5px;
     }
 
     .exercise-header {
       font-style: italic;
-      margin-left: 10px;
+      margin-left: 15px;
       background: #f0f7fa;
       padding: 5px 8px;
       border-radius: 5px;
+      margin-top: 5px;
     }
 
     .set-item {
-      margin-left: 20px;
+      margin-left: 30px;
     }
   </style>
 </head>
@@ -131,8 +163,8 @@
   <h1>🏋️ Gym Tracker</h1>
 
   <nav>
-    <button onclick="switchTab('workout')">Workout</button>
-    <button onclick="switchTab('history')">History</button>
+    <button id="tabWorkoutBtn" class="active" onclick="switchTab('workout', this)">Home</button>
+    <button id="tabHistoryBtn" onclick="switchTab('history', this)">History</button>
   </nav>
 
   <section id="workout" class="active">
@@ -150,14 +182,14 @@
 
     <div id="setDetails" style="display:none;">
       <p id="setInfo"></p>
-      <input type="number" id="weight" placeholder="Weight (kg)">
-      <input type="number" id="reps" placeholder="Reps">
-      <input type="number" id="rpe" placeholder="RPE (1-10)">
+      <input type="number" id="weight" placeholder="Weight (kg)" min="0" step="any" />
+      <input type="number" id="reps" placeholder="Reps" min="0" />
+      <input type="number" id="rpe" placeholder="RPE (1-10)" min="1" max="10" />
       <button onclick="submitSet()">Submit Set</button>
     </div>
 
     <div id="restControls">
-      <input type="number" id="rest" placeholder="Rest Time (seconds)">
+      <input type="number" id="rest" placeholder="Rest Time (seconds)" min="1" />
       <button onclick="startCountdownFromInput()">Start Rest Timer</button>
     </div>
 
@@ -184,18 +216,10 @@
     let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
     let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
 
-    // setCounts per user and exercise
     let setCounts = JSON.parse(localStorage.getItem("setCounts")) || {};
     if (!setCounts[today]) {
       setCounts[today] = {};
     }
-    // Initialize today's set counts for each user and exercise if not present
-    exercises.forEach(ex => {
-      if (!setCounts[today]["Selim"]) setCounts[today]["Selim"] = {};
-      if (!setCounts[today]["Friend"]) setCounts[today]["Friend"] = {};
-      if (!setCounts[today]["Selim"][ex]) setCounts[today]["Selim"][ex] = 1;
-      if (!setCounts[today]["Friend"][ex]) setCounts[today]["Friend"][ex] = 1;
-    });
 
     let currentExercise = '';
     let currentUser = '';
@@ -208,9 +232,16 @@
       localStorage.setItem("setCounts", JSON.stringify(setCounts));
     }
 
-    function switchTab(tabId) {
+    function switchTab(tabId, btn) {
       document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
       document.getElementById(tabId).classList.add("active");
+
+      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // On showing history tab, refresh history list
+      if(tabId === "history") renderHistory();
+      if(tabId === "workout") renderLog();
     }
 
     function addExercise() {
@@ -248,7 +279,6 @@
         return;
       }
       currentUser = user;
-      // Get current set count for this user and exercise
       const setsForUser = (setCounts[today] && setCounts[today][user]) || {};
       const currentSet = setsForUser[currentExercise] || 1;
 
@@ -266,7 +296,6 @@
         return;
       }
 
-      // Get current set count for this user and exercise
       const setsForUser = (setCounts[today] && setCounts[today][currentUser]) || {};
       let currentSet = setsForUser[currentExercise] || 1;
 
@@ -284,7 +313,6 @@
       workoutLog.push(entry);
       localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
 
-      // Increment set count for this user & exercise
       if (!setCounts[today]) setCounts[today] = {};
       if (!setCounts[today][currentUser]) setCounts[today][currentUser] = {};
       setCounts[today][currentUser][currentExercise] = currentSet + 1;
@@ -327,7 +355,6 @@
       document.getElementById("finishPrompt").style.display = "none";
       document.getElementById("restTimer").textContent = "";
       if (done) {
-        // Reset set count for current user & exercise
         if (setCounts[today] && setCounts[today][currentUser]) {
           setCounts[today][currentUser][currentExercise] = 1;
           localStorage.setItem("setCounts", JSON.stringify(setCounts));
@@ -339,7 +366,6 @@
       const logList = document.getElementById("logList");
       logList.innerHTML = '';
 
-      // Group entries by user, then by exercise
       const grouped = {};
 
       workoutLog.filter(e => e.date === today).forEach(entry => {
@@ -349,14 +375,12 @@
       });
 
       for (const user in grouped) {
-        // User header
         const userHeader = document.createElement("li");
         userHeader.textContent = user;
         userHeader.className = "user-header";
         logList.appendChild(userHeader);
 
         for (const exercise in grouped[user]) {
-          // Exercise header
           const exHeader = document.createElement("li");
           exHeader.textContent = exercise;
           exHeader.className = "exercise-header";
@@ -367,7 +391,6 @@
             item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
             item.className = "set-item";
 
-            // Delete button
             const delBtn = document.createElement("button");
             delBtn.innerHTML = "✕";
             delBtn.className = "delete-btn";
@@ -379,9 +402,7 @@
                   e.set === entry.set));
               localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
 
-              // Reset setCounts for this user & exercise to correct next set number
               const setsForUser = (setCounts[today] && setCounts[today][entry.user]) || {};
-              // Find max set after deletion
               const maxSet = workoutLog
                 .filter(e => e.date === today && e.user === entry.user && e.exercise === entry.exercise)
                 .reduce((max, e) => e.set > max ? e.set : max, 0);
@@ -395,6 +416,74 @@
 
             logList.appendChild(item);
           });
+        }
+      }
+    }
+
+    function renderHistory() {
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+
+      // Group by date → user → exercise
+      const grouped = {};
+
+      // Sort entries by date descending for better UX
+      workoutLog.slice().sort((a,b) => b.date.localeCompare(a.date)).forEach(entry => {
+        if (!grouped[entry.date]) grouped[entry.date] = {};
+        if (!grouped[entry.date][entry.user]) grouped[entry.date][entry.user] = {};
+        if (!grouped[entry.date][entry.user][entry.exercise]) grouped[entry.date][entry.user][entry.exercise] = [];
+        grouped[entry.date][entry.user][entry.exercise].push(entry);
+      });
+
+      for (const date of Object.keys(grouped).sort((a,b) => b.localeCompare(a))) {
+        const dateHeader = document.createElement("li");
+        dateHeader.textContent = date;
+        dateHeader.className = "date-header";
+        historyList.appendChild(dateHeader);
+
+        for (const user in grouped[date]) {
+          const userHeader = document.createElement("li");
+          userHeader.textContent = user;
+          userHeader.className = "user-header";
+          historyList.appendChild(userHeader);
+
+          for (const exercise in grouped[date][user]) {
+            const exHeader = document.createElement("li");
+            exHeader.textContent = exercise;
+            exHeader.className = "exercise-header";
+            historyList.appendChild(exHeader);
+
+            grouped[date][user][exercise].forEach(entry => {
+              const item = document.createElement("li");
+              item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+              item.className = "set-item";
+
+              const delBtn = document.createElement("button");
+              delBtn.innerHTML = "✕";
+              delBtn.className = "delete-btn";
+              delBtn.onclick = () => {
+                workoutLog = workoutLog.filter(e =>
+                  !(e.date === entry.date &&
+                    e.user === entry.user &&
+                    e.exercise === entry.exercise &&
+                    e.set === entry.set));
+                localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
+
+                const setsForUser = (setCounts[today] && setCounts[today][entry.user]) || {};
+                const maxSet = workoutLog
+                  .filter(e => e.date === today && e.user === entry.user && e.exercise === entry.exercise)
+                  .reduce((max, e) => e.set > max ? e.set : max, 0);
+                setCounts[today][entry.user][entry.exercise] = maxSet + 1;
+                localStorage.setItem("setCounts", JSON.stringify(setCounts));
+
+                renderLog();
+                renderHistory();
+              };
+              item.appendChild(delBtn);
+
+              historyList.appendChild(item);
+            });
+          }
         }
       }
     }
@@ -414,16 +503,6 @@
       }
       document.getElementById('maxWeightDisplay').textContent =
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
-    }
-
-    function renderHistory() {
-      const historyList = document.getElementById("historyList");
-      historyList.innerHTML = '';
-      for (let entry of workoutLog) {
-        const item = document.createElement("li");
-        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-        historyList.appendChild(item);
-      }
     }
 
     function loadExercises() {
