@@ -89,6 +89,16 @@
       display: none;
       margin-top: 10px;
     }
+
+    .delete-btn {
+      float: right;
+      background: none;
+      border: none;
+      color: red;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -214,7 +224,7 @@
       workoutLog.push(entry);
       localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
 
-      renderLogItem(entry);
+      renderTodayLog();
       setCounts[currentUser]++;
       updateMaxWeightDisplay(currentExercise);
 
@@ -256,10 +266,43 @@
       }
     }
 
-    function renderLogItem(entry) {
+    function renderLogItem(entry, index) {
       const item = document.createElement("li");
-      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+      item.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
+        <button onclick="deleteSet(${index})" class="delete-btn">🗑️</button>`;
       document.getElementById("logList").appendChild(item);
+    }
+
+    function renderTodayLog() {
+      document.getElementById("logList").innerHTML = '';
+      workoutLog.forEach((entry, index) => {
+        if (entry.date === today) {
+          renderLogItem(entry, index);
+          if (setCounts[entry.user] <= entry.set) {
+            setCounts[entry.user] = entry.set + 1;
+          }
+        }
+      });
+    }
+
+    function renderHistory() {
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+      workoutLog.forEach((entry, index) => {
+        const item = document.createElement("li");
+        item.innerHTML = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
+          <button onclick="deleteSet(${index})" class="delete-btn">🗑️</button>`;
+        historyList.appendChild(item);
+      });
+    }
+
+    function deleteSet(index) {
+      if (confirm("Are you sure you want to delete this set?")) {
+        workoutLog.splice(index, 1);
+        localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
+        renderTodayLog();
+        renderHistory();
+      }
     }
 
     function updateMaxWeightDisplay(exerciseName) {
@@ -277,28 +320,6 @@
       }
       document.getElementById('maxWeightDisplay').textContent =
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
-    }
-
-    function renderTodayLog() {
-      document.getElementById("logList").innerHTML = '';
-      for (let entry of workoutLog) {
-        if (entry.date === today) {
-          renderLogItem(entry);
-          if (setCounts[entry.user] <= entry.set) {
-            setCounts[entry.user] = entry.set + 1;
-          }
-        }
-      }
-    }
-
-    function renderHistory() {
-      const historyList = document.getElementById("historyList");
-      historyList.innerHTML = '';
-      for (let entry of workoutLog) {
-        const item = document.createElement("li");
-        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-        historyList.appendChild(item);
-      }
     }
 
     function loadExercises() {
