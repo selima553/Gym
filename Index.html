@@ -174,14 +174,14 @@
 
       <div id="setDetails" style="display:none;">
         <p id="setInfo"></p>
-        <input type="number" id="weight" placeholder="Weight (kg)" min="0">
-        <input type="number" id="reps" placeholder="Reps" min="0">
-        <input type="number" id="rpe" placeholder="RPE (1-10)" min="1" max="10">
+        <input type="number" id="weight" placeholder="Weight (kg)" min="0" />
+        <input type="number" id="reps" placeholder="Reps" min="0" />
+        <input type="number" id="rpe" placeholder="RPE (1-10)" min="1" max="10" />
         <button onclick="submitSet()">Submit Set</button>
       </div>
 
       <div id="restControls">
-        <input type="number" id="rest" placeholder="Rest Time (seconds)" min="0">
+        <input type="number" id="rest" placeholder="Rest Time (seconds)" min="0" />
         <button onclick="startCountdownFromInput()">Start Rest Timer</button>
       </div>
 
@@ -205,15 +205,6 @@
       </select>
       <ul id="historyList"></ul>
     </section>
-
-    <!-- GRAPH TAB -->
-    <section id="graph">
-      <h3>Reps vs Weight Graph</h3>
-      <select id="graphExerciseSelect" onchange="renderGraph()">
-        <option value="">-- Select Exercise --</option>
-      </select>
-      <canvas id="chartCanvas" style="width:100%;max-width:100%;height:300px;"></canvas>
-    </section>
   </main>
 
   <nav class="bottom-nav">
@@ -225,13 +216,8 @@
       <svg viewBox="0 0 24 24"><path d="M13 3a9 9 0 0 0-9 9H3a10 10 0 1 1 10 10v-1a9 9 0 0 0 0-18zm-1 4v5h4v-2h-2V7h-2z"/></svg>
       History
     </button>
-    <button onclick="switchTab('graph', this)" aria-label="Graph">
-      <svg viewBox="0 0 24 24"><path d="M3 17h2v-7H3v7zm4 0h2v-4H7v4zm4 0h2v-10h-2v10zm4 0h2v-2h-2v2zm4 0h2v-6h-2v6z"/></svg>
-      Graph
-    </button>
   </nav>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const today = new Date().toISOString().split("T")[0];
     let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
@@ -251,7 +237,6 @@
       if(btn) btn.classList.add('active');
 
       if(tabId === 'history') renderHistory();
-      if(tabId === 'graph') renderGraph();
     }
 
     function addExercise() {
@@ -271,12 +256,9 @@
       // History filter select
       const filter = document.getElementById("historyFilter");
       filter.innerHTML = '<option value="">-- All Exercises --</option>';
-      // Graph exercise select
-      const graphSelect = document.getElementById("graphExerciseSelect");
-      graphSelect.innerHTML = '<option value="">-- Select Exercise --</option>';
 
       exercises.forEach(name => {
-        [select, filter, graphSelect].forEach(sel => {
+        [select, filter].forEach(sel => {
           const option = document.createElement("option");
           option.value = name;
           option.text = name;
@@ -431,104 +413,11 @@
       }
     }
 
-    // GRAPH RELATED
-
-    let chart;
-
-    function renderGraph() {
-      const exercise = document.getElementById("graphExerciseSelect").value;
-      const ctx = document.getElementById("chartCanvas").getContext('2d');
-
-      if(chart) {
-        chart.destroy();
-      }
-
-      if (!exercise) {
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        return;
-      }
-
-      // Filter data for selected exercise
-      const data = workoutLog.filter(e => e.exercise === exercise);
-
-      // Separate datasets for Selim and Friend
-      const selimData = data.filter(e => e.user === 'Selim');
-      const friendData = data.filter(e => e.user === 'Friend');
-
-      // Sort by date & set for proper timeline order
-      selimData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.set - b.set);
-      friendData.sort((a,b) => new Date(a.date) - new Date(b.date) || a.set - b.set);
-
-      // Limit to last 50 sets each to reduce lag
-      const selimLimited = selimData.slice(-50);
-      const friendLimited = friendData.slice(-50);
-
-      function mapData(arr) {
-        return arr.map(e => ({
-          x: parseInt(e.reps),
-          y: parseFloat(e.weight),
-          label: `${e.date} Set ${e.set} (RPE ${e.rpe})`
-        }));
-      }
-
-      const datasets = [
-        {
-          label: 'Selim',
-          data: mapData(selimLimited),
-          backgroundColor: 'rgba(233, 30, 99, 0.7)',
-          borderColor: 'rgba(233, 30, 99, 1)',
-          borderWidth: 1,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-        },
-        {
-          label: 'Friend',
-          data: mapData(friendLimited),
-          backgroundColor: 'rgba(33, 150, 243, 0.7)',
-          borderColor: 'rgba(33, 150, 243, 1)',
-          borderWidth: 1,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-        }
-      ];
-
-      chart = new Chart(ctx, {
-        type: 'scatter',
-        data: { datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            tooltip: {
-              callbacks: {
-                label: ctx => {
-                  const point = ctx.raw;
-                  return `${ctx.dataset.label}: Reps ${point.x}, Weight ${point.y}kg, ${point.label}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              title: { display: true, text: 'Reps' },
-              beginAtZero: true,
-              ticks: { stepSize: 1 }
-            },
-            y: {
-              title: { display: true, text: 'Weight (kg)' },
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-
     // INITIAL LOAD
     window.onload = () => {
       updateExerciseOptions();
       renderLog();
       renderHistory();
-      renderGraph();
     };
   </script>
 </body>
