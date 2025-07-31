@@ -2,8 +2,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gym Tracker</title>
   <style>
     body {
@@ -73,6 +73,8 @@
     #restTimer {
       text-align: center;
       font-weight: bold;
+      font-size: 18px;
+      color: #e91e63;
       margin: 10px 0;
     }
 
@@ -80,6 +82,10 @@
       font-weight: bold;
       text-align: center;
       margin-bottom: 10px;
+    }
+
+    #restControls {
+      display: none;
     }
   </style>
 </head>
@@ -110,8 +116,12 @@
       <input type="number" id="weight" placeholder="Weight (kg)">
       <input type="number" id="reps" placeholder="Reps">
       <input type="number" id="rpe" placeholder="RPE (1-10)">
-      <input type="number" id="rest" placeholder="Rest (seconds)">
       <button onclick="submitSet()">Submit Set</button>
+    </div>
+
+    <div id="restControls">
+      <input type="number" id="rest" placeholder="Rest Time (seconds)">
+      <button onclick="startCountdownFromInput()">Start Rest Timer</button>
     </div>
 
     <div id="restTimer"></div>
@@ -134,6 +144,7 @@
     let setCounts = { Selim: 1, Friend: 1 };
     let currentExercise = '';
     let currentUser = '';
+    let countdownInterval;
 
     if (lastSavedDate !== today) {
       localStorage.setItem("lastWorkoutDate", today);
@@ -174,14 +185,13 @@
       currentUser = user;
       document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[user]}`;
       document.getElementById("setDetails").style.display = "block";
-      document.getElementById("restTimer").textContent = "";
+      document.getElementById("restControls").style.display = "block";
     }
 
     function submitSet() {
       const weight = document.getElementById("weight").value;
       const reps = document.getElementById("reps").value;
       const rpe = document.getElementById("rpe").value;
-      const rest = parseInt(document.getElementById("rest").value);
 
       const entry = {
         user: currentUser,
@@ -190,7 +200,7 @@
         weight,
         reps,
         rpe,
-        rest,
+        rest: 0,
         date: today
       };
 
@@ -204,28 +214,32 @@
       document.getElementById("weight").value = '';
       document.getElementById("reps").value = '';
       document.getElementById("rpe").value = '';
-      document.getElementById("rest").value = '';
       document.getElementById("setDetails").style.display = "none";
+    }
 
-      if (rest && rest > 0) {
-        startCountdown(rest);
-      }
+    function startCountdownFromInput() {
+      const seconds = parseInt(document.getElementById("rest").value);
+      if (isNaN(seconds) || seconds <= 0) return;
+      startCountdown(seconds);
     }
 
     function startCountdown(seconds) {
+      clearInterval(countdownInterval);
       const timer = document.getElementById("restTimer");
-      const end = Date.now() + seconds * 1000;
-      const interval = setInterval(() => {
-        const now = Date.now();
-        const remaining = Math.max(0, Math.floor((end - now) / 1000));
-        timer.textContent = `Resting: ${remaining} seconds left`;
-        if (remaining <= 0) clearInterval(interval);
-      }, 500);
+      let remaining = seconds;
+      countdownInterval = setInterval(() => {
+        if (remaining <= 0) {
+          clearInterval(countdownInterval);
+          timer.textContent = "✅ Rest done!";
+        } else {
+          timer.textContent = `⏳ Rest: ${remaining--}s remaining`;
+        }
+      }, 1000);
     }
 
     function renderLogItem(entry) {
       const item = document.createElement("li");
-      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe}) - Rest ${entry.rest}s`;
+      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
       document.getElementById("logList").appendChild(item);
     }
 
