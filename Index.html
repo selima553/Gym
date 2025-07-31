@@ -3,104 +3,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gym Workout Logger</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gym Tracker</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 10px;
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
       margin: 0;
-      background: #f9f9f9;
+      padding: 10px;
     }
 
-    h1, h2 {
+    h1 {
       text-align: center;
+      margin: 10px 0;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 15px;
+    }
+
+    nav button {
+      flex: 1;
+      padding: 10px;
+      margin: 0 5px;
+      font-size: 16px;
+    }
+
+    section {
+      display: none;
+    }
+
+    section.active {
+      display: block;
     }
 
     input, select, button {
-      margin: 5px 0;
+      display: block;
+      width: 100%;
+      margin: 8px 0;
       padding: 10px;
       font-size: 16px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    #setDetails {
-      margin-top: 10px;
     }
 
     #logList, #historyList {
-      list-style-type: none;
-      padding-left: 0;
+      list-style: none;
+      padding: 0;
     }
 
     li {
       background: #fff;
-      margin-bottom: 5px;
       padding: 10px;
-      border-radius: 4px;
+      margin-bottom: 5px;
+      border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
-    .button-group {
+    .user-buttons {
       display: flex;
       justify-content: space-between;
       gap: 10px;
-      margin: 10px 0;
     }
 
-    @media (min-width: 600px) {
-      .button-group button {
-        width: 48%;
-      }
+    .user-buttons button {
+      flex: 1;
+    }
+
+    #restTimer {
+      text-align: center;
+      font-weight: bold;
+      margin: 10px 0;
     }
 
     #maxWeightDisplay {
-      margin: 10px 0;
       font-weight: bold;
       text-align: center;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
 
-  <h1>🏋️ Workout Logger</h1>
+  <h1>🏋️ Gym Tracker</h1>
 
-  <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
-    <option value="">-- Select Exercise --</option>
-  </select>
-  <input type="text" id="newExercise" placeholder="Add new exercise" />
-  <button onclick="addExercise()">Add Exercise</button>
-  <div id="maxWeightDisplay"></div>
+  <nav>
+    <button onclick="switchTab('workout')">Workout</button>
+    <button onclick="switchTab('history')">History</button>
+  </nav>
 
-  <div class="button-group">
-    <button onclick="startSet('Selim')">Selim</button>
-    <button onclick="startSet('Friend')">Friend</button>
-  </div>
+  <section id="workout" class="active">
+    <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
+      <option value="">-- Select Exercise --</option>
+    </select>
+    <input type="text" id="newExercise" placeholder="Add new exercise" />
+    <button onclick="addExercise()">Add Exercise</button>
+    <div id="maxWeightDisplay"></div>
 
-  <div id="setDetails" style="display:none;">
-    <p id="setInfo"></p>
-    <input type="number" id="weight" placeholder="Weight (kg)">
-    <input type="number" id="reps" placeholder="Reps">
-    <input type="number" id="rpe" placeholder="RPE (1-10)">
-    <input type="number" id="rest" placeholder="Rest (seconds)">
-    <button onclick="submitSet()">Submit Set</button>
-  </div>
+    <div class="user-buttons">
+      <button onclick="startSet('Selim')">Selim</button>
+      <button onclick="startSet('Friend')">Friend</button>
+    </div>
 
-  <h2>Today's Log</h2>
-  <ul id="logList"></ul>
+    <div id="setDetails" style="display:none;">
+      <p id="setInfo"></p>
+      <input type="number" id="weight" placeholder="Weight (kg)">
+      <input type="number" id="reps" placeholder="Reps">
+      <input type="number" id="rpe" placeholder="RPE (1-10)">
+      <input type="number" id="rest" placeholder="Rest (seconds)">
+      <button onclick="submitSet()">Submit Set</button>
+    </div>
 
-  <h2>Full History</h2>
-  <ul id="historyList"></ul>
+    <div id="restTimer"></div>
+
+    <h3>Today's Log</h3>
+    <ul id="logList"></ul>
+  </section>
+
+  <section id="history">
+    <h3>All History</h3>
+    <ul id="historyList"></ul>
+  </section>
 
   <script>
     const today = new Date().toISOString().split("T")[0];
     const lastSavedDate = localStorage.getItem("lastWorkoutDate");
-
     let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
     let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
 
@@ -111,9 +138,11 @@
     if (lastSavedDate !== today) {
       localStorage.setItem("lastWorkoutDate", today);
       setCounts = { Selim: 1, Friend: 1 };
-      document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById('logList').innerHTML = '';
-      });
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
     }
 
     function addExercise() {
@@ -132,9 +161,9 @@
       }
     }
 
-    function handleExerciseChange(selected) {
-      currentExercise = selected;
-      updateMaxWeightDisplay(selected);
+    function handleExerciseChange(name) {
+      currentExercise = name;
+      updateMaxWeightDisplay(name);
     }
 
     function startSet(user) {
@@ -143,15 +172,16 @@
         return;
       }
       currentUser = user;
-      document.getElementById('setInfo').textContent = `User: ${user}, Set: ${setCounts[user]}`;
-      document.getElementById('setDetails').style.display = 'block';
+      document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[user]}`;
+      document.getElementById("setDetails").style.display = "block";
+      document.getElementById("restTimer").textContent = "";
     }
 
     function submitSet() {
-      const weight = document.getElementById('weight').value;
-      const reps = document.getElementById('reps').value;
-      const rpe = document.getElementById('rpe').value;
-      const rest = document.getElementById('rest').value;
+      const weight = document.getElementById("weight").value;
+      const reps = document.getElementById("reps").value;
+      const rpe = document.getElementById("rpe").value;
+      const rest = parseInt(document.getElementById("rest").value);
 
       const entry = {
         user: currentUser,
@@ -171,18 +201,32 @@
       setCounts[currentUser]++;
       updateMaxWeightDisplay(currentExercise);
 
-      document.getElementById('weight').value = '';
-      document.getElementById('reps').value = '';
-      document.getElementById('rpe').value = '';
-      document.getElementById('rest').value = '';
-      document.getElementById('setDetails').style.display = 'none';
+      document.getElementById("weight").value = '';
+      document.getElementById("reps").value = '';
+      document.getElementById("rpe").value = '';
+      document.getElementById("rest").value = '';
+      document.getElementById("setDetails").style.display = "none";
+
+      if (rest && rest > 0) {
+        startCountdown(rest);
+      }
+    }
+
+    function startCountdown(seconds) {
+      const timer = document.getElementById("restTimer");
+      const end = Date.now() + seconds * 1000;
+      const interval = setInterval(() => {
+        const now = Date.now();
+        const remaining = Math.max(0, Math.floor((end - now) / 1000));
+        timer.textContent = `Resting: ${remaining} seconds left`;
+        if (remaining <= 0) clearInterval(interval);
+      }, 500);
     }
 
     function renderLogItem(entry) {
-      const list = document.getElementById('logList');
-      const item = document.createElement('li');
+      const item = document.createElement("li");
       item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe}) - Rest ${entry.rest}s`;
-      list.appendChild(item);
+      document.getElementById("logList").appendChild(item);
     }
 
     function updateMaxWeightDisplay(exerciseName) {
@@ -190,10 +234,7 @@
         document.getElementById('maxWeightDisplay').textContent = '';
         return;
       }
-
-      let selimMax = 0;
-      let friendMax = 0;
-
+      let selimMax = 0, friendMax = 0;
       for (let entry of workoutLog) {
         if (entry.exercise === exerciseName) {
           const weight = parseFloat(entry.weight);
@@ -201,14 +242,12 @@
           if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
         }
       }
-
-      document.getElementById('maxWeightDisplay').textContent = 
+      document.getElementById('maxWeightDisplay').textContent =
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
     }
 
-    function renderTodayOnlyLog() {
-      const list = document.getElementById('logList');
-      list.innerHTML = '';
+    function renderTodayLog() {
+      document.getElementById("logList").innerHTML = '';
       for (let entry of workoutLog) {
         if (entry.date === today) {
           renderLogItem(entry);
@@ -219,10 +258,20 @@
       }
     }
 
-    function loadSavedExercises() {
-      const select = document.getElementById('exerciseSelect');
+    function renderHistory() {
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+      for (let entry of workoutLog) {
+        const item = document.createElement("li");
+        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+        historyList.appendChild(item);
+      }
+    }
+
+    function loadExercises() {
+      const select = document.getElementById("exerciseSelect");
       for (let name of exercises) {
-        const option = document.createElement('option');
+        const option = document.createElement("option");
         option.value = name;
         option.text = name;
         select.appendChild(option);
@@ -230,21 +279,10 @@
     }
 
     window.onload = () => {
-      loadSavedExercises();
-      renderTodayOnlyLog();
+      loadExercises();
+      renderTodayLog();
       renderHistory();
     };
-
-    function renderHistory() {
-      const historyList = document.getElementById('historyList');
-      historyList.innerHTML = '';
-      for (let entry of workoutLog) {
-        const item = document.createElement('li');
-        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe}) - Rest ${entry.rest}s`;
-        historyList.appendChild(item);
-      }
-    }
   </script>
-
 </body>
 </html>
