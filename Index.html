@@ -46,7 +46,7 @@
       font-size: 16px;
     }
 
-    #logList, .history-group {
+    #logList, #historyList {
       list-style: none;
       padding: 0;
     }
@@ -57,6 +57,7 @@
       margin-bottom: 5px;
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: relative;
     }
 
     .user-buttons {
@@ -83,25 +84,32 @@
       margin-bottom: 10px;
     }
 
-    #restControls, #finishPrompt {
+    #restControls,
+    #finishPrompt {
       display: none;
       margin-top: 10px;
     }
 
-    .history-date {
-      font-weight: bold;
-      margin-top: 15px;
-      font-size: 18px;
+    .delete-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #e91e63;
+      color: #fff;
+      border: none;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
     }
 
-    .delete-btn {
-      float: right;
-      background: none;
-      border: none;
-      color: red;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
+    .history-group {
+      margin-top: 15px;
+    }
+
+    .history-group h4 {
+      margin: 10px 0 5px;
+      border-bottom: 1px solid #ccc;
     }
   </style>
 </head>
@@ -153,11 +161,11 @@
   </section>
 
   <section id="history">
-    <h3>All History</h3>
-    <select id="filterSelect" onchange="renderHistory()">
-      <option value="">-- All Exercises --</option>
+    <select id="filterDropdown" onchange="renderHistory()">
+      <option value="">-- Filter by Exercise --</option>
     </select>
-    <div id="historyContainer"></div>
+    <h3>All History</h3>
+    <div id="historyList"></div>
   </section>
 
   <script>
@@ -166,14 +174,14 @@
     let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
     let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
 
-    let setCounts = { Selim: 1, Friend: 1 };
+    let setCounts = { Selim: {}, Friend: {} };
     let currentExercise = '';
     let currentUser = '';
     let countdownInterval;
 
     if (lastSavedDate !== today) {
       localStorage.setItem("lastWorkoutDate", today);
-      setCounts = { Selim: 1, Friend: 1 };
+      setCounts = { Selim: {}, Friend: {} };
     }
 
     function switchTab(tabId) {
@@ -186,22 +194,21 @@
       if (name && !exercises.includes(name)) {
         exercises.push(name);
         localStorage.setItem("exercises", JSON.stringify(exercises));
-        addOptionToSelects(name);
-        document.getElementById('newExercise').value = '';
-      }
-    }
-
-    function addOptionToSelects(name) {
-      const exerciseSelect = document.getElementById('exerciseSelect');
-      const filterSelect = document.getElementById('filterSelect');
-      [exerciseSelect, filterSelect].forEach(select => {
+        const select = document.getElementById('exerciseSelect');
         const option = document.createElement('option');
         option.value = name;
         option.text = name;
         select.appendChild(option);
-      });
-      exerciseSelect.value = name;
-      handleExerciseChange(name);
+
+        const filterOption = document.createElement("option");
+        filterOption.value = name;
+        filterOption.text = name;
+        document.getElementById("filterDropdown").appendChild(filterOption);
+
+        select.value = name;
+        handleExerciseChange(name);
+        document.getElementById('newExercise').value = '';
+      }
     }
 
     function handleExerciseChange(name) {
@@ -215,7 +222,10 @@
         return;
       }
       currentUser = user;
-      document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[user]}`;
+      if (!setCounts[user][currentExercise]) {
+        setCounts[user][currentExercise] = 1;
+      }
+      document.getElementById("setInfo").textContent = `User: ${user}, Exercise: ${currentExercise}, Set: ${setCounts[user][currentExercise]}`;
       document.getElementById("setDetails").style.display = "block";
     }
 
@@ -227,19 +237,19 @@
       const entry = {
         user: currentUser,
         exercise: currentExercise,
-        set: setCounts[currentUser],
+        set: setCounts[currentUser][currentExercise],
         weight,
         reps,
         rpe,
+        rest: 0,
         date: today
       };
 
       workoutLog.push(entry);
       localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
 
-      renderTodayLog();
-      renderHistory();
-      setCounts[currentUser]++;
+      renderLogItem(entry);
+      setCounts[currentUser][currentExercise]++;
       updateMaxWeightDisplay(currentExercise);
 
       document.getElementById("setDetails").style.display = "none";
@@ -276,78 +286,95 @@
       document.getElementById("finishPrompt").style.display = "none";
       document.getElementById("restTimer").textContent = "";
       if (done) {
-        setCounts[currentUser] = 1;
+        setCounts[currentUser][currentExercise] = 1;
       }
     }
 
-    function deleteSet(index) {
-      if (confirm("Delete this set?")) {
-        workoutLog.splice(index, 1);
+    function renderLogItem(entry, container = document.getElementById("logList")) {
+      const item = document.createElement("li");
+      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "x";
+      delBtn.className = "delete-btn";
+      delBtn.onclick = () => {
+        workoutLog = workoutLog.filter(e => !(e.date === entry.date && e.exercise === entry.exercise && e.set === entry.set && e.user === entry.user));
         localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
         renderTodayLog();
         renderHistory();
-      }
-    }
-
-    function renderTodayLog() {
-      document.getElementById("logList").innerHTML = '';
-      workoutLog.forEach((entry, index) => {
-        if (entry.date === today) {
-          const item = document.createElement("li");
-          item.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
-            <button class="delete-btn" onclick="deleteSet(${index})">🗑️</button>`;
-          document.getElementById("logList").appendChild(item);
-        }
-      });
+        updateMaxWeightDisplay(currentExercise);
+      };
+      item.appendChild(delBtn);
+      container.appendChild(item);
     }
 
     function updateMaxWeightDisplay(exerciseName) {
+      if (!exerciseName) {
+        document.getElementById('maxWeightDisplay').textContent = '';
+        return;
+      }
       let selimMax = 0, friendMax = 0;
       for (let entry of workoutLog) {
         if (entry.exercise === exerciseName) {
-          const w = parseFloat(entry.weight);
-          if (entry.user === 'Selim' && w > selimMax) selimMax = w;
-          if (entry.user === 'Friend' && w > friendMax) friendMax = w;
+          const weight = parseFloat(entry.weight);
+          if (entry.user === 'Selim' && weight > selimMax) selimMax = weight;
+          if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
         }
       }
       document.getElementById('maxWeightDisplay').textContent =
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
     }
 
+    function renderTodayLog() {
+      document.getElementById("logList").innerHTML = '';
+      for (let entry of workoutLog) {
+        if (entry.date === today) {
+          renderLogItem(entry);
+          if (!setCounts[entry.user][entry.exercise] || setCounts[entry.user][entry.exercise] <= entry.set) {
+            setCounts[entry.user][entry.exercise] = entry.set + 1;
+          }
+        }
+      }
+    }
+
     function renderHistory() {
-      const container = document.getElementById("historyContainer");
-      const filter = document.getElementById("filterSelect").value;
-      container.innerHTML = '';
+      const historyList = document.getElementById("historyList");
+      const filter = document.getElementById("filterDropdown").value;
+      historyList.innerHTML = '';
 
       const grouped = {};
-      workoutLog.forEach((entry, index) => {
-        if (filter && entry.exercise !== filter) return;
+      for (let entry of workoutLog) {
+        if (filter && entry.exercise !== filter) continue;
         if (!grouped[entry.date]) grouped[entry.date] = [];
-        grouped[entry.date].push({ ...entry, index });
-      });
+        grouped[entry.date].push(entry);
+      }
 
-      Object.keys(grouped).sort((a, b) => b.localeCompare(a)).forEach(date => {
-        const dateHeader = document.createElement("div");
-        dateHeader.className = "history-date";
-        dateHeader.textContent = date;
-        container.appendChild(dateHeader);
+      for (let date in grouped) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "history-group";
+        const header = document.createElement("h4");
+        header.textContent = date;
+        wrapper.appendChild(header);
 
-        const ul = document.createElement("ul");
-        ul.className = "history-group";
+        for (let entry of grouped[date]) {
+          renderLogItem(entry, wrapper);
+        }
 
-        grouped[date].forEach(entry => {
-          const li = document.createElement("li");
-          li.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
-            <button class="delete-btn" onclick="deleteSet(${entry.index})">🗑️</button>`;
-          ul.appendChild(li);
-        });
-
-        container.appendChild(ul);
-      });
+        historyList.appendChild(wrapper);
+      }
     }
 
     function loadExercises() {
-      exercises.forEach(name => addOptionToSelects(name));
+      const select = document.getElementById("exerciseSelect");
+      const filter = document.getElementById("filterDropdown");
+      for (let name of exercises) {
+        const option1 = document.createElement("option");
+        const option2 = document.createElement("option");
+        option1.value = option2.value = name;
+        option1.text = option2.text = name;
+        select.appendChild(option1);
+        filter.appendChild(option2);
+      }
     }
 
     window.onload = () => {
