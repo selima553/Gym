@@ -111,19 +111,20 @@
       margin-top: 10px;
     }
 
-    .delete-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: transparent;
-      border: none;
-      color: #e91e63;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-      padding: 0 5px;
-    }
+   .delete-btn {
+  position: absolute;
+  right: 8px;
+  top: 8px;          /* changed from 50% + translateY to fixed top */
+  transform: none;   /* removed vertical centering */
+  background: transparent;
+  border: none;
+  color: #e91e63;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
 
     /* Indentation for grouping */
     .date-header {
