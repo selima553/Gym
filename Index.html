@@ -84,8 +84,10 @@
       margin-bottom: 10px;
     }
 
-    #restControls {
+    #restControls,
+    #finishPrompt {
       display: none;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -125,6 +127,12 @@
     </div>
 
     <div id="restTimer"></div>
+
+    <div id="finishPrompt">
+      <p>✅ Finished this exercise?</p>
+      <button onclick="finishWorkout(true)">Yes</button>
+      <button onclick="finishWorkout(false)">No</button>
+    </div>
 
     <h3>Today's Log</h3>
     <ul id="logList"></ul>
@@ -185,7 +193,6 @@
       currentUser = user;
       document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[user]}`;
       document.getElementById("setDetails").style.display = "block";
-      document.getElementById("restControls").style.display = "block";
     }
 
     function submitSet() {
@@ -211,15 +218,17 @@
       setCounts[currentUser]++;
       updateMaxWeightDisplay(currentExercise);
 
+      document.getElementById("setDetails").style.display = "none";
       document.getElementById("weight").value = '';
       document.getElementById("reps").value = '';
       document.getElementById("rpe").value = '';
-      document.getElementById("setDetails").style.display = "none";
+      document.getElementById("restControls").style.display = "block";
     }
 
     function startCountdownFromInput() {
       const seconds = parseInt(document.getElementById("rest").value);
       if (isNaN(seconds) || seconds <= 0) return;
+      document.getElementById("restControls").style.display = "none";
       startCountdown(seconds);
     }
 
@@ -227,14 +236,24 @@
       clearInterval(countdownInterval);
       const timer = document.getElementById("restTimer");
       let remaining = seconds;
+      timer.textContent = `⏳ Rest: ${remaining}s remaining`;
       countdownInterval = setInterval(() => {
         if (remaining <= 0) {
           clearInterval(countdownInterval);
           timer.textContent = "✅ Rest done!";
+          document.getElementById("finishPrompt").style.display = "block";
         } else {
           timer.textContent = `⏳ Rest: ${remaining--}s remaining`;
         }
       }, 1000);
+    }
+
+    function finishWorkout(done) {
+      document.getElementById("finishPrompt").style.display = "none";
+      document.getElementById("restTimer").textContent = "";
+      if (done) {
+        setCounts[currentUser] = 1;
+      }
     }
 
     function renderLogItem(entry) {
