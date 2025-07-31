@@ -110,12 +110,21 @@
       display: none;
       margin-top: 10px;
     }
+li {
+  position: relative; /* Add this to enable absolute positioning inside */
+  background: #fff;
+  padding: 10px 35px 10px 10px; /* add right padding so text doesn't go under the button */
+  margin-bottom: 5px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  word-break: break-word;
+}
 
-   .delete-btn {
+.delete-btn {
   position: absolute;
   right: 8px;
-  top: 8px;          /* changed from 50% + translateY to fixed top */
-  transform: none;   /* removed vertical centering */
+  top: 50%;
+  transform: translateY(-50%);
   background: transparent;
   border: none;
   color: #e91e63;
@@ -124,6 +133,7 @@
   cursor: pointer;
   padding: 0 5px;
 }
+
 
 
     /* Indentation for grouping */
