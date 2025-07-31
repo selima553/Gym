@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +46,7 @@
       font-size: 16px;
     }
 
-    #logList, #historyList {
+    #logList, .history-group {
       list-style: none;
       padding: 0;
     }
@@ -84,10 +83,15 @@
       margin-bottom: 10px;
     }
 
-    #restControls,
-    #finishPrompt {
+    #restControls, #finishPrompt {
       display: none;
       margin-top: 10px;
+    }
+
+    .history-date {
+      font-weight: bold;
+      margin-top: 15px;
+      font-size: 18px;
     }
 
     .delete-btn {
@@ -150,7 +154,10 @@
 
   <section id="history">
     <h3>All History</h3>
-    <ul id="historyList"></ul>
+    <select id="filterSelect" onchange="renderHistory()">
+      <option value="">-- All Exercises --</option>
+    </select>
+    <div id="historyContainer"></div>
   </section>
 
   <script>
@@ -179,15 +186,22 @@
       if (name && !exercises.includes(name)) {
         exercises.push(name);
         localStorage.setItem("exercises", JSON.stringify(exercises));
-        const select = document.getElementById('exerciseSelect');
+        addOptionToSelects(name);
+        document.getElementById('newExercise').value = '';
+      }
+    }
+
+    function addOptionToSelects(name) {
+      const exerciseSelect = document.getElementById('exerciseSelect');
+      const filterSelect = document.getElementById('filterSelect');
+      [exerciseSelect, filterSelect].forEach(select => {
         const option = document.createElement('option');
         option.value = name;
         option.text = name;
         select.appendChild(option);
-        select.value = name;
-        handleExerciseChange(name);
-        document.getElementById('newExercise').value = '';
-      }
+      });
+      exerciseSelect.value = name;
+      handleExerciseChange(name);
     }
 
     function handleExerciseChange(name) {
@@ -217,7 +231,6 @@
         weight,
         reps,
         rpe,
-        rest: 0,
         date: today
       };
 
@@ -225,6 +238,7 @@
       localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
 
       renderTodayLog();
+      renderHistory();
       setCounts[currentUser]++;
       updateMaxWeightDisplay(currentExercise);
 
@@ -266,38 +280,8 @@
       }
     }
 
-    function renderLogItem(entry, index) {
-      const item = document.createElement("li");
-      item.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
-        <button onclick="deleteSet(${index})" class="delete-btn">🗑️</button>`;
-      document.getElementById("logList").appendChild(item);
-    }
-
-    function renderTodayLog() {
-      document.getElementById("logList").innerHTML = '';
-      workoutLog.forEach((entry, index) => {
-        if (entry.date === today) {
-          renderLogItem(entry, index);
-          if (setCounts[entry.user] <= entry.set) {
-            setCounts[entry.user] = entry.set + 1;
-          }
-        }
-      });
-    }
-
-    function renderHistory() {
-      const historyList = document.getElementById("historyList");
-      historyList.innerHTML = '';
-      workoutLog.forEach((entry, index) => {
-        const item = document.createElement("li");
-        item.innerHTML = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
-          <button onclick="deleteSet(${index})" class="delete-btn">🗑️</button>`;
-        historyList.appendChild(item);
-      });
-    }
-
     function deleteSet(index) {
-      if (confirm("Are you sure you want to delete this set?")) {
+      if (confirm("Delete this set?")) {
         workoutLog.splice(index, 1);
         localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
         renderTodayLog();
@@ -305,31 +289,65 @@
       }
     }
 
+    function renderTodayLog() {
+      document.getElementById("logList").innerHTML = '';
+      workoutLog.forEach((entry, index) => {
+        if (entry.date === today) {
+          const item = document.createElement("li");
+          item.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
+            <button class="delete-btn" onclick="deleteSet(${index})">🗑️</button>`;
+          document.getElementById("logList").appendChild(item);
+        }
+      });
+    }
+
     function updateMaxWeightDisplay(exerciseName) {
-      if (!exerciseName) {
-        document.getElementById('maxWeightDisplay').textContent = '';
-        return;
-      }
       let selimMax = 0, friendMax = 0;
       for (let entry of workoutLog) {
         if (entry.exercise === exerciseName) {
-          const weight = parseFloat(entry.weight);
-          if (entry.user === 'Selim' && weight > selimMax) selimMax = weight;
-          if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
+          const w = parseFloat(entry.weight);
+          if (entry.user === 'Selim' && w > selimMax) selimMax = w;
+          if (entry.user === 'Friend' && w > friendMax) friendMax = w;
         }
       }
       document.getElementById('maxWeightDisplay').textContent =
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
     }
 
+    function renderHistory() {
+      const container = document.getElementById("historyContainer");
+      const filter = document.getElementById("filterSelect").value;
+      container.innerHTML = '';
+
+      const grouped = {};
+      workoutLog.forEach((entry, index) => {
+        if (filter && entry.exercise !== filter) return;
+        if (!grouped[entry.date]) grouped[entry.date] = [];
+        grouped[entry.date].push({ ...entry, index });
+      });
+
+      Object.keys(grouped).sort((a, b) => b.localeCompare(a)).forEach(date => {
+        const dateHeader = document.createElement("div");
+        dateHeader.className = "history-date";
+        dateHeader.textContent = date;
+        container.appendChild(dateHeader);
+
+        const ul = document.createElement("ul");
+        ul.className = "history-group";
+
+        grouped[date].forEach(entry => {
+          const li = document.createElement("li");
+          li.innerHTML = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})
+            <button class="delete-btn" onclick="deleteSet(${entry.index})">🗑️</button>`;
+          ul.appendChild(li);
+        });
+
+        container.appendChild(ul);
+      });
+    }
+
     function loadExercises() {
-      const select = document.getElementById("exerciseSelect");
-      for (let name of exercises) {
-        const option = document.createElement("option");
-        option.value = name;
-        option.text = name;
-        select.appendChild(option);
-      }
+      exercises.forEach(name => addOptionToSelects(name));
     }
 
     window.onload = () => {
