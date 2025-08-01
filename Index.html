@@ -10,9 +10,6 @@
       background: #f7f7f7;
       margin: 0;
       padding: 10px;
-      max-width: 480px;
-      margin-left: auto;
-      margin-right: auto;
     }
 
     h1 {
@@ -22,30 +19,15 @@
 
     nav {
       display: flex;
-      justify-content: space-around;
+      justify-content: center;
       margin-bottom: 15px;
-      position: sticky;
-      top: 0;
-      background: white;
-      border-bottom: 1px solid #ddd;
-      z-index: 100;
     }
 
     nav button {
       flex: 1;
-      padding: 12px 0;
+      padding: 10px;
+      margin: 0 5px;
       font-size: 16px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: border-color 0.3s;
-    }
-
-    nav button.active {
-      border-bottom: 3px solid #2196f3;
-      font-weight: bold;
-      color: #2196f3;
     }
 
     section {
@@ -62,33 +44,43 @@
       margin: 8px 0;
       padding: 10px;
       font-size: 16px;
-      box-sizing: border-box;
-    }
-
-    #logList, #historyList {
-      list-style: none;
-      padding: 0;
-      margin: 0;
     }
 
     li {
+      position: relative;
       background: #fff;
       padding: 10px;
       margin-bottom: 5px;
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      position: relative;
       word-break: break-word;
     }
 
-    .user-buttons {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
+    .edit-btn {
+      position: absolute;
+      top: 10px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      color: #007bff;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
     }
 
-    .user-buttons button {
-      flex: 1;
+    .edit-form {
+      margin-top: 8px;
+      background: #f1f1f1;
+      padding: 8px;
+      border-radius: 5px;
+    }
+
+    .user-section {
+      margin-top: 10px;
+    }
+
+    .exercise-section {
+      margin-left: 10px;
     }
 
     #restTimer {
@@ -110,78 +102,17 @@
       display: none;
       margin-top: 10px;
     }
-li {
-  position: relative; /* Add this to enable absolute positioning inside */
-  background: #fff;
-  padding: 10px 35px 10px 10px; /* add right padding so text doesn't go under the button */
-  margin-bottom: 5px;
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  word-break: break-word;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  background: none;
-  color: #e91e63;
-  border: none;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-  height: 20px;
-  width: 20px;
-  text-align: center;
-}
-
-
-
-    /* Indentation for grouping */
-    .date-header {
-      font-weight: bold;
-      margin-top: 15px;
-      background: #d6eaf8;
-      padding: 8px;
-      border-radius: 5px;
-      font-size: 1.1em;
-    }
-
-    .user-header {
-      font-weight: bold;
-      margin-top: 10px;
-      background: #d0f0fd;
-      padding: 8px;
-      border-radius: 5px;
-      margin-left: 5px;
-    }
-
-    .exercise-header {
-      font-style: italic;
-      margin-left: 15px;
-      background: #f0f7fa;
-      padding: 5px 8px;
-      border-radius: 5px;
-      margin-top: 5px;
-    }
-
-    .set-item {
-      margin-left: 30px;
-    }
   </style>
 </head>
 <body>
-
   <h1>🏋️ Gym Tracker</h1>
 
   <nav>
-    <button id="tabWorkoutBtn" class="active" onclick="switchTab('workout', this)">Home</button>
-    <button id="tabHistoryBtn" onclick="switchTab('history', this)">History</button>
+    <button onclick="switchTab('home')">Home</button>
+    <button onclick="switchTab('history')">History</button>
   </nav>
 
-  <section id="workout" class="active">
+  <section id="home" class="active">
     <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
       <option value="">-- Select Exercise --</option>
     </select>
@@ -196,14 +127,14 @@ li {
 
     <div id="setDetails" style="display:none;">
       <p id="setInfo"></p>
-      <input type="number" id="weight" placeholder="Weight (kg)" min="0" step="any" />
-      <input type="number" id="reps" placeholder="Reps" min="0" />
-      <input type="number" id="rpe" placeholder="RPE (1-10)" min="1" max="10" />
+      <input type="number" id="weight" placeholder="Weight (kg)">
+      <input type="number" id="reps" placeholder="Reps">
+      <input type="number" id="rpe" placeholder="RPE (1-10)">
       <button onclick="submitSet()">Submit Set</button>
     </div>
 
     <div id="restControls">
-      <input type="number" id="rest" placeholder="Rest Time (seconds)" min="1" />
+      <input type="number" id="rest" placeholder="Rest Time (seconds)">
       <button onclick="startCountdownFromInput()">Start Rest Timer</button>
     </div>
 
@@ -216,46 +147,24 @@ li {
     </div>
 
     <h3>Today's Log</h3>
-    <ul id="logList"></ul>
+    <div id="logList"></div>
   </section>
 
   <section id="history">
     <h3>All History</h3>
-    <ul id="historyList"></ul>
+    <div id="historyList"></div>
   </section>
 
   <script>
     const today = new Date().toISOString().split("T")[0];
-    const lastSavedDate = localStorage.getItem("lastWorkoutDate");
     let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
     let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
-
     let setCounts = JSON.parse(localStorage.getItem("setCounts")) || {};
-    if (!setCounts[today]) {
-      setCounts[today] = {};
-    }
+    let currentExercise = '', currentUser = '', countdownInterval;
 
-    let currentExercise = '';
-    let currentUser = '';
-    let countdownInterval;
-
-    if (lastSavedDate !== today) {
-      localStorage.setItem("lastWorkoutDate", today);
-      setCounts = {};
-      setCounts[today] = {};
-      localStorage.setItem("setCounts", JSON.stringify(setCounts));
-    }
-
-    function switchTab(tabId, btn) {
+    function switchTab(tabId) {
       document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
       document.getElementById(tabId).classList.add("active");
-
-      document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      // On showing history tab, refresh history list
-      if(tabId === "history") renderHistory();
-      if(tabId === "workout") renderLog();
     }
 
     function addExercise() {
@@ -263,22 +172,11 @@ li {
       if (name && !exercises.includes(name)) {
         exercises.push(name);
         localStorage.setItem("exercises", JSON.stringify(exercises));
-        const select = document.getElementById('exerciseSelect');
-        const option = document.createElement('option');
-        option.value = name;
-        option.text = name;
-        select.appendChild(option);
-        select.value = name;
+        const option = new Option(name, name);
+        document.getElementById('exerciseSelect').appendChild(option);
+        document.getElementById('exerciseSelect').value = name;
         handleExerciseChange(name);
         document.getElementById('newExercise').value = '';
-
-        // initialize setCounts for new exercise
-        if (!setCounts[today]) setCounts[today] = {};
-        if (!setCounts[today]["Selim"]) setCounts[today]["Selim"] = {};
-        if (!setCounts[today]["Friend"]) setCounts[today]["Friend"] = {};
-        setCounts[today]["Selim"][name] = 1;
-        setCounts[today]["Friend"][name] = 1;
-        localStorage.setItem("setCounts", JSON.stringify(setCounts));
       }
     }
 
@@ -288,15 +186,12 @@ li {
     }
 
     function startSet(user) {
-      if (!currentExercise) {
-        alert("Please select an exercise first.");
-        return;
-      }
+      if (!currentExercise) return alert("Select an exercise first.");
       currentUser = user;
-      const setsForUser = (setCounts[today] && setCounts[today][user]) || {};
-      const currentSet = setsForUser[currentExercise] || 1;
+      if (!setCounts[user]) setCounts[user] = {};
+      if (!setCounts[user][currentExercise]) setCounts[user][currentExercise] = 1;
 
-      document.getElementById("setInfo").textContent = `User: ${user}, Exercise: ${currentExercise}, Set: ${currentSet}`;
+      document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[user][currentExercise]}`;
       document.getElementById("setDetails").style.display = "block";
     }
 
@@ -305,34 +200,23 @@ li {
       const reps = document.getElementById("reps").value;
       const rpe = document.getElementById("rpe").value;
 
-      if (!weight || !reps || !rpe) {
-        alert("Please fill all set details.");
-        return;
-      }
-
-      const setsForUser = (setCounts[today] && setCounts[today][currentUser]) || {};
-      let currentSet = setsForUser[currentExercise] || 1;
-
       const entry = {
         user: currentUser,
         exercise: currentExercise,
-        set: currentSet,
+        set: setCounts[currentUser][currentExercise],
         weight,
         reps,
         rpe,
-        rest: 0,
         date: today
       };
 
       workoutLog.push(entry);
+      setCounts[currentUser][currentExercise]++;
       localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-
-      if (!setCounts[today]) setCounts[today] = {};
-      if (!setCounts[today][currentUser]) setCounts[today][currentUser] = {};
-      setCounts[today][currentUser][currentExercise] = currentSet + 1;
       localStorage.setItem("setCounts", JSON.stringify(setCounts));
 
-      renderLog();
+      renderTodayLog();
+      renderHistory();
       updateMaxWeightDisplay(currentExercise);
 
       document.getElementById("setDetails").style.display = "none";
@@ -368,145 +252,10 @@ li {
     function finishWorkout(done) {
       document.getElementById("finishPrompt").style.display = "none";
       document.getElementById("restTimer").textContent = "";
-      if (done) {
-        if (setCounts[today] && setCounts[today][currentUser]) {
-          setCounts[today][currentUser][currentExercise] = 1;
-          localStorage.setItem("setCounts", JSON.stringify(setCounts));
-        }
-      }
-    }
-
-    function renderLog() {
-      const logList = document.getElementById("logList");
-      logList.innerHTML = '';
-
-      const grouped = {};
-
-      workoutLog.filter(e => e.date === today).forEach(entry => {
-        if (!grouped[entry.user]) grouped[entry.user] = {};
-        if (!grouped[entry.user][entry.exercise]) grouped[entry.user][entry.exercise] = [];
-        grouped[entry.user][entry.exercise].push(entry);
-      });
-
-      for (const user in grouped) {
-        const userHeader = document.createElement("li");
-        userHeader.textContent = user;
-        userHeader.className = "user-header";
-        logList.appendChild(userHeader);
-
-        for (const exercise in grouped[user]) {
-          const exHeader = document.createElement("li");
-          exHeader.textContent = exercise;
-          exHeader.className = "exercise-header";
-          logList.appendChild(exHeader);
-
-          grouped[user][exercise].forEach(entry => {
-            const item = document.createElement("li");
-            item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-            item.className = "set-item";
-
-            const delBtn = document.createElement("button");
-            delBtn.innerHTML = "✕";
-            delBtn.className = "delete-btn";
-            delBtn.onclick = () => {
-              workoutLog = workoutLog.filter(e =>
-                !(e.date === entry.date &&
-                  e.user === entry.user &&
-                  e.exercise === entry.exercise &&
-                  e.set === entry.set));
-              localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-
-              const setsForUser = (setCounts[today] && setCounts[today][entry.user]) || {};
-              const maxSet = workoutLog
-                .filter(e => e.date === today && e.user === entry.user && e.exercise === entry.exercise)
-                .reduce((max, e) => e.set > max ? e.set : max, 0);
-              setCounts[today][entry.user][entry.exercise] = maxSet + 1;
-              localStorage.setItem("setCounts", JSON.stringify(setCounts));
-
-              renderLog();
-              renderHistory();
-            };
-            item.appendChild(delBtn);
-
-            logList.appendChild(item);
-          });
-        }
-      }
-    }
-
-    function renderHistory() {
-      const historyList = document.getElementById("historyList");
-      historyList.innerHTML = '';
-
-      // Group by date → user → exercise
-      const grouped = {};
-
-      // Sort entries by date descending for better UX
-      workoutLog.slice().sort((a,b) => b.date.localeCompare(a.date)).forEach(entry => {
-        if (!grouped[entry.date]) grouped[entry.date] = {};
-        if (!grouped[entry.date][entry.user]) grouped[entry.date][entry.user] = {};
-        if (!grouped[entry.date][entry.user][entry.exercise]) grouped[entry.date][entry.user][entry.exercise] = [];
-        grouped[entry.date][entry.user][entry.exercise].push(entry);
-      });
-
-      for (const date of Object.keys(grouped).sort((a,b) => b.localeCompare(a))) {
-        const dateHeader = document.createElement("li");
-        dateHeader.textContent = date;
-        dateHeader.className = "date-header";
-        historyList.appendChild(dateHeader);
-
-        for (const user in grouped[date]) {
-          const userHeader = document.createElement("li");
-          userHeader.textContent = user;
-          userHeader.className = "user-header";
-          historyList.appendChild(userHeader);
-
-          for (const exercise in grouped[date][user]) {
-            const exHeader = document.createElement("li");
-            exHeader.textContent = exercise;
-            exHeader.className = "exercise-header";
-            historyList.appendChild(exHeader);
-
-            grouped[date][user][exercise].forEach(entry => {
-              const item = document.createElement("li");
-              item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-              item.className = "set-item";
-
-              const delBtn = document.createElement("button");
-              delBtn.innerHTML = "✕";
-              delBtn.className = "delete-btn";
-              delBtn.onclick = () => {
-                workoutLog = workoutLog.filter(e =>
-                  !(e.date === entry.date &&
-                    e.user === entry.user &&
-                    e.exercise === entry.exercise &&
-                    e.set === entry.set));
-                localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-
-                const setsForUser = (setCounts[today] && setCounts[today][entry.user]) || {};
-                const maxSet = workoutLog
-                  .filter(e => e.date === today && e.user === entry.user && e.exercise === entry.exercise)
-                  .reduce((max, e) => e.set > max ? e.set : max, 0);
-                setCounts[today][entry.user][entry.exercise] = maxSet + 1;
-                localStorage.setItem("setCounts", JSON.stringify(setCounts));
-
-                renderLog();
-                renderHistory();
-              };
-              item.appendChild(delBtn);
-
-              historyList.appendChild(item);
-            });
-          }
-        }
-      }
     }
 
     function updateMaxWeightDisplay(exerciseName) {
-      if (!exerciseName) {
-        document.getElementById('maxWeightDisplay').textContent = '';
-        return;
-      }
+      if (!exerciseName) return document.getElementById('maxWeightDisplay').textContent = '';
       let selimMax = 0, friendMax = 0;
       for (let entry of workoutLog) {
         if (entry.exercise === exerciseName) {
@@ -519,20 +268,107 @@ li {
         `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
     }
 
+    function renderTodayLog() {
+      const logList = document.getElementById("logList");
+      logList.innerHTML = '';
+      const todayEntries = workoutLog.filter(e => e.date === today);
+      renderGrouped(logList, todayEntries);
+    }
+
+    function renderHistory() {
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+      renderGrouped(historyList, workoutLog);
+    }
+
+    function renderGrouped(container, entries) {
+      const grouped = {};
+
+      for (let entry of entries) {
+        const key = `${entry.user}|${entry.exercise}|${entry.date}`;
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(entry);
+      }
+
+      const users = [...new Set(entries.map(e => e.user))];
+      users.forEach(user => {
+        const userSection = document.createElement("div");
+        userSection.className = "user-section";
+        const userHeader = document.createElement("h4");
+        userHeader.textContent = user;
+        userSection.appendChild(userHeader);
+
+        const userEntries = Object.entries(grouped).filter(([k]) => k.startsWith(user));
+        userEntries.forEach(([key, sets]) => {
+          const [, exercise, date] = key.split('|');
+          const exerciseSection = document.createElement("div");
+          exerciseSection.className = "exercise-section";
+          const exerciseHeader = document.createElement("strong");
+          exerciseHeader.textContent = `${exercise} (${date})`;
+          exerciseSection.appendChild(exerciseHeader);
+
+          sets.forEach((entry, i) => {
+            const li = document.createElement("li");
+            li.textContent = ` Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+
+            const editBtn = document.createElement("button");
+            editBtn.textContent = "✏️";
+            editBtn.className = "edit-btn";
+            editBtn.onclick = () => showEditForm(li, entry);
+            li.appendChild(editBtn);
+            exerciseSection.appendChild(li);
+          });
+
+          userSection.appendChild(exerciseSection);
+        });
+
+        container.appendChild(userSection);
+      });
+    }
+
+    function showEditForm(li, entry) {
+      const form = document.createElement("div");
+      form.className = "edit-form";
+
+      const weight = document.createElement("input");
+      weight.type = "number";
+      weight.value = entry.weight;
+      const reps = document.createElement("input");
+      reps.type = "number";
+      reps.value = entry.reps;
+      const rpe = document.createElement("input");
+      rpe.type = "number";
+      rpe.value = entry.rpe;
+
+      const save = document.createElement("button");
+      save.textContent = "Save";
+      save.onclick = () => {
+        entry.weight = weight.value;
+        entry.reps = reps.value;
+        entry.rpe = rpe.value;
+        localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
+        renderTodayLog();
+        renderHistory();
+      };
+
+      form.appendChild(weight);
+      form.appendChild(reps);
+      form.appendChild(rpe);
+      form.appendChild(save);
+      li.appendChild(form);
+    }
+
     function loadExercises() {
       const select = document.getElementById("exerciseSelect");
-      select.innerHTML = '<option value="">-- Select Exercise --</option>';
-      for (let name of exercises) {
-        const option = document.createElement("option");
-        option.value = name;
-        option.text = name;
+      exercises.forEach(name => {
+        const option = new Option(name, name);
         select.appendChild(option);
-      }
+      });
     }
 
     window.onload = () => {
       loadExercises();
-      renderLog();
+      renderTodayLog();
       renderHistory();
     };
   </script>
