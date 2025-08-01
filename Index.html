@@ -1,325 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
   <title>Gym Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 10px;
-    }
+    * { box-sizing: border-box; font-family: sans-serif; }
+    body { margin: 0; padding: 0; background: #f5f5f5; color: #333; }
+    .tabs { display: flex; justify-content: space-around; background: #111; color: white; }
+    .tabs button { flex: 1; padding: 1em; background: none; border: none; color: inherit; font-weight: bold; }
+    .tabs button.active { background: #222; }
+    .tab-content { padding: 1em; }
 
-    h1 {
-      text-align: center;
-      margin: 10px 0;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 15px;
-    }
-
-    nav button {
-      flex: 1;
-      padding: 10px;
-      margin: 0 5px;
-      font-size: 16px;
-    }
-
-    section {
-      display: none;
-    }
-
-    section.active {
-      display: block;
-    }
-
-    input, select, button {
-      display: block;
+    select, input, button {
+      padding: 0.6em;
+      margin: 0.4em 0;
       width: 100%;
-      margin: 8px 0;
-      padding: 10px;
-      font-size: 16px;
+      max-width: 400px;
     }
 
-    #logList, #historyList {
-      list-style: none;
-      padding: 0;
-    }
+    #todayLog, #historyLog { margin-top: 1em; }
 
-    li {
-      background: #fff;
-      padding: 10px;
-      margin-bottom: 5px;
+    .log-block {
+      background: white;
+      margin: 0.5em 0;
+      padding: 0.5em;
       border-radius: 5px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      position: relative;
     }
 
-    .mic-btn {
-      background: #e91e63;
+    .log-header {
+      font-weight: bold;
+      margin-bottom: 0.3em;
+    }
+
+    .microphone {
+      font-size: 1.5em;
+      background: red;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      font-size: 24px;
-      cursor: pointer;
-      margin: 10px auto;
-      display: block;
+      width: 2.5em;
+      height: 2.5em;
+      margin-top: 0.5em;
     }
 
-    #debugMessage, #debugTranscribed {
-      color: #555;
-      text-align: center;
-      margin-bottom: 6px;
+    .debug {
+      background: #222;
+      color: lime;
+      font-size: 0.8em;
+      padding: 0.5em;
+      margin-top: 0.5em;
       white-space: pre-wrap;
-      font-size: 14px;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-  <h1>🏋️ Gym Tracker</h1>
+<div class="tabs">
+  <button onclick="showTab('home')" class="active">Home</button>
+  <button onclick="showTab('history')">History</button>
+</div>
 
-  <nav>
-    <button onclick="switchTab('workout')">Workout</button>
-    <button onclick="switchTab('history')">History</button>
-  </nav>
+<div id="home" class="tab-content">
+  <h2>Workout Logger</h2>
+  <select id="exerciseSelect">
+    <option value="">Select Exercise</option>
+  </select>
+  <input type="text" id="newExercise" placeholder="Add new exercise">
+  <button onclick="addExercise()">Add Exercise</button>
 
-  <section id="workout" class="active">
-    <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
-      <option value="">-- Select Exercise --</option>
-    </select>
-    <input type="text" id="newExercise" placeholder="Add new exercise" />
-    <button onclick="addExercise()">Add Exercise</button>
+  <select id="userSelect">
+    <option value="">Select User</option>
+    <option value="Selim">Selim</option>
+    <option value="Friend">Friend</option>
+  </select>
 
-    <div class="user-buttons">
-      <button onclick="startSet('Selim')">Selim</button>
-      <button onclick="startSet('Friend')">Friend</button>
-    </div>
+  <input type="number" id="weight" placeholder="Weight (kg)">
+  <input type="number" id="reps" placeholder="Reps">
+  <input type="number" id="rpe" placeholder="Difficulty (RPE)">
+  <button onclick="submitSet()">Submit Set</button>
+  <button class="microphone" onclick="startListening()">🎤</button>
 
-    <div id="setDetails" style="display:none;">
-      <p id="setInfo"></p>
-      <input type="number" id="weight" placeholder="Weight (kg)">
-      <input type="number" id="reps" placeholder="Reps">
-      <input type="number" id="rpe" placeholder="RPE (1-10)">
-      <button onclick="submitSet()">Submit Set</button>
-      <div id="debugTranscribed"></div>
-      <div id="debugMessage"></div>
-      <button class="mic-btn" onclick="startVoiceInput()">🎤</button>
-    </div>
+  <div class="debug" id="debug">Voice debug will show here...</div>
 
-    <h3>Today's Log</h3>
-    <ul id="logList"></ul>
-  </section>
+  <div id="todayLog"></div>
+</div>
 
-  <section id="history">
-    <h3>All History</h3>
-    <ul id="historyList"></ul>
-  </section>
+<div id="history" class="tab-content" style="display:none">
+  <h2>Workout History</h2>
+  <select id="filterWorkout" onchange="renderHistory()">
+    <option value="">All Workouts</option>
+  </select>
+  <select id="filterDate" onchange="renderHistory()">
+    <option value="">All Dates</option>
+  </select>
+  <div id="historyLog"></div>
+</div>
 
-  <script>
-    const today = new Date().toISOString().split("T")[0];
-    const lastSavedDate = localStorage.getItem("lastWorkoutDate");
-    let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
-    let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
+<script>
+let logs = JSON.parse(localStorage.getItem("gymLogs")) || [];
+let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
+let currentDate = new Date().toISOString().split('T')[0];
 
-    let setCounts = JSON.parse(localStorage.getItem("setCounts")) || { Selim: {}, Friend: {} };
-    let currentExercise = '';
-    let currentUser = '';
+function showTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(div => div.style.display = 'none');
+  document.querySelectorAll('.tabs button').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(tab).style.display = 'block';
+  document.querySelector(`.tabs button[onclick="showTab('${tab}')"]`).classList.add('active');
 
-    if (lastSavedDate !== today) {
-      localStorage.setItem("lastWorkoutDate", today);
-      setCounts = { Selim: {}, Friend: {} };
-      localStorage.setItem("setCounts", JSON.stringify(setCounts));
+  if (tab === 'history') renderHistory();
+}
+
+function addExercise() {
+  const newEx = document.getElementById("newExercise").value.trim();
+  if (newEx && !exercises.includes(newEx)) {
+    exercises.push(newEx);
+    localStorage.setItem("exercises", JSON.stringify(exercises));
+    updateExerciseDropdown();
+  }
+  document.getElementById("newExercise").value = "";
+}
+
+function updateExerciseDropdown() {
+  const select = document.getElementById("exerciseSelect");
+  select.innerHTML = '<option value="">Select Exercise</option>';
+  exercises.forEach(ex => {
+    const opt = document.createElement("option");
+    opt.value = ex;
+    opt.textContent = ex;
+    select.appendChild(opt);
+  });
+
+  const filterSelect = document.getElementById("filterWorkout");
+  filterSelect.innerHTML = '<option value="">All Workouts</option>';
+  exercises.forEach(ex => {
+    const opt = document.createElement("option");
+    opt.value = ex;
+    opt.textContent = ex;
+    filterSelect.appendChild(opt);
+  });
+}
+
+function submitSet() {
+  const exercise = document.getElementById("exerciseSelect").value;
+  const user = document.getElementById("userSelect").value;
+  const weight = parseInt(document.getElementById("weight").value);
+  const reps = parseInt(document.getElementById("reps").value);
+  const rpe = parseInt(document.getElementById("rpe").value);
+
+  if (!exercise || !user || isNaN(weight) || isNaN(reps) || isNaN(rpe)) return;
+
+  logs.push({ date: currentDate, exercise, user, weight, reps, rpe });
+  localStorage.setItem("gymLogs", JSON.stringify(logs));
+
+  renderTodayLog();
+  document.getElementById("weight").value = "";
+  document.getElementById("reps").value = "";
+  document.getElementById("rpe").value = "";
+}
+
+function renderTodayLog() {
+  const today = logs.filter(log => log.date === currentDate);
+  const grouped = {};
+
+  today.forEach(log => {
+    if (!grouped[log.user]) grouped[log.user] = {};
+    if (!grouped[log.user][log.exercise]) grouped[log.user][log.exercise] = [];
+    grouped[log.user][log.exercise].push(log);
+  });
+
+  const container = document.getElementById("todayLog");
+  container.innerHTML = "<h3>Today's Log</h3>";
+
+  for (let user in grouped) {
+    const userDiv = document.createElement("div");
+    userDiv.innerHTML = `<h4>${user}</h4>`;
+    for (let ex in grouped[user]) {
+      const exDiv = document.createElement("div");
+      exDiv.innerHTML = `<strong>${ex}</strong>`;
+      grouped[user][ex].forEach(set => {
+        const setDiv = document.createElement("div");
+        setDiv.className = "log-block";
+        setDiv.textContent = `${set.weight}kg x ${set.reps} reps (RPE ${set.rpe})`;
+        exDiv.appendChild(setDiv);
+      });
+      userDiv.appendChild(exDiv);
     }
+    container.appendChild(userDiv);
+  }
+}
 
-    function switchTab(tabId) {
-      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
-      document.getElementById(tabId).classList.add("active");
-    }
+function renderHistory() {
+  const filterWorkout = document.getElementById("filterWorkout").value;
+  const filterDate = document.getElementById("filterDate").value;
+  const filtered = logs.filter(log => 
+    (!filterWorkout || log.exercise === filterWorkout) &&
+    (!filterDate || log.date === filterDate)
+  );
 
-    function addExercise() {
-      const name = document.getElementById('newExercise').value.trim();
-      if (name && !exercises.includes(name)) {
-        exercises.push(name);
-        localStorage.setItem("exercises", JSON.stringify(exercises));
-        const select = document.getElementById('exerciseSelect');
-        const option = document.createElement('option');
-        option.value = name;
-        option.text = name;
-        select.appendChild(option);
-        select.value = name;
-        handleExerciseChange(name);
-        document.getElementById('newExercise').value = '';
+  const grouped = {};
+
+  filtered.forEach(log => {
+    if (!grouped[log.date]) grouped[log.date] = {};
+    if (!grouped[log.date][log.user]) grouped[log.date][log.user] = {};
+    if (!grouped[log.date][log.user][log.exercise]) grouped[log.date][log.user][log.exercise] = [];
+    grouped[log.date][log.user][log.exercise].push(log);
+  });
+
+  const container = document.getElementById("historyLog");
+  container.innerHTML = "";
+
+  for (let date in grouped) {
+    const dateDiv = document.createElement("div");
+    dateDiv.innerHTML = `<h4>${date}</h4>`;
+    for (let user in grouped[date]) {
+      const userDiv = document.createElement("div");
+      userDiv.innerHTML = `<h5>${user}</h5>`;
+      for (let ex in grouped[date][user]) {
+        const exDiv = document.createElement("div");
+        exDiv.innerHTML = `<strong>${ex}</strong>`;
+        grouped[date][user][ex].forEach(set => {
+          const setDiv = document.createElement("div");
+          setDiv.className = "log-block";
+          setDiv.textContent = `${set.weight}kg x ${set.reps} reps (RPE ${set.rpe})`;
+          exDiv.appendChild(setDiv);
+        });
+        userDiv.appendChild(exDiv);
       }
+      dateDiv.appendChild(userDiv);
     }
+    container.appendChild(dateDiv);
+  }
 
-    function handleExerciseChange(name) {
-      currentExercise = name;
-      document.getElementById('debugMessage').textContent = '';
-      document.getElementById('debugTranscribed').textContent = '';
+  // Populate date dropdown
+  const dateSet = new Set(logs.map(log => log.date));
+  const filterDate = document.getElementById("filterDate");
+  filterDate.innerHTML = '<option value="">All Dates</option>';
+  dateSet.forEach(date => {
+    const opt = document.createElement("option");
+    opt.value = date;
+    opt.textContent = date;
+    filterDate.appendChild(opt);
+  });
+}
+
+function startListening() {
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Voice recognition not supported on this browser.");
+    return;
+  }
+
+  const recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  const debug = document.getElementById("debug");
+  debug.textContent = "🎤 Listening...";
+
+  recognition.onstart = () => debug.textContent = "🎤 Voice started...";
+  recognition.onerror = (e) => debug.textContent = "❌ Error: " + e.error;
+  recognition.onend = () => debug.textContent += "\n✅ Done listening.";
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript.trim();
+    debug.textContent = `📝 Transcribed: "${transcript}"`;
+
+    const numbers = transcript.match(/\d+/g);
+    if (numbers && numbers.length >= 3) {
+      document.getElementById("weight").value = numbers[0];
+      document.getElementById("reps").value = numbers[1];
+      document.getElementById("rpe").value = numbers[2];
+      submitSet();
+      debug.textContent += `\n✅ Set added: ${numbers[0]}kg x ${numbers[1]} (RPE ${numbers[2]})`;
+    } else {
+      debug.textContent += "\n❌ Please say three numbers like: 6 12 7";
     }
+  };
 
-    function startSet(user) {
-      if (!currentExercise) {
-        alert("Please select an exercise first.");
-        return;
-      }
-      currentUser = user;
-      const userCount = setCounts[user][currentExercise] || 1;
-      document.getElementById("setInfo").textContent = `User: ${user}, Exercise: ${currentExercise}, Set: ${userCount}`;
-      document.getElementById("setDetails").style.display = "block";
-      document.getElementById('debugMessage').textContent = '';
-      document.getElementById('debugTranscribed').textContent = '';
-    }
+  recognition.start();
+}
 
-    function submitSet() {
-      const weight = document.getElementById("weight").value;
-      const reps = document.getElementById("reps").value;
-      const rpe = document.getElementById("rpe").value;
-      const set = setCounts[currentUser][currentExercise] || 1;
-
-      if (!weight || !reps || !rpe) {
-        alert("Please fill in weight, reps, and RPE.");
-        return;
-      }
-
-      const entry = {
-        user: currentUser,
-        exercise: currentExercise,
-        set,
-        weight,
-        reps,
-        rpe,
-        date: today
-      };
-
-      workoutLog.push(entry);
-      localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-
-      setCounts[currentUser][currentExercise] = set + 1;
-      localStorage.setItem("setCounts", JSON.stringify(setCounts));
-
-      renderLogItem(entry);
-      document.getElementById("setDetails").style.display = "none";
-      document.getElementById("weight").value = '';
-      document.getElementById("reps").value = '';
-      document.getElementById("rpe").value = '';
-      document.getElementById('debugMessage').textContent = '';
-      document.getElementById('debugTranscribed').textContent = '';
-    }
-
-    function renderLogItem(entry) {
-      const item = document.createElement("li");
-      item.textContent = `${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-      document.getElementById("logList").appendChild(item);
-    }
-
-    function renderTodayLog() {
-      document.getElementById("logList").innerHTML = '';
-      for (let entry of workoutLog) {
-        if (entry.date === today) {
-          renderLogItem(entry);
-          const current = setCounts[entry.user][entry.exercise] || 1;
-          if (entry.set >= current) {
-            setCounts[entry.user][entry.exercise] = entry.set + 1;
-          }
-        }
-      }
-    }
-
-    function renderHistory() {
-      const historyList = document.getElementById("historyList");
-      historyList.innerHTML = '';
-      for (let entry of workoutLog) {
-        const item = document.createElement("li");
-        item.textContent = `${entry.date} - ${entry.exercise} - ${entry.user} - Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
-        historyList.appendChild(item);
-      }
-    }
-
-    function loadExercises() {
-      const select = document.getElementById("exerciseSelect");
-      for (let name of exercises) {
-        const option = document.createElement("option");
-        option.value = name;
-        option.text = name;
-        select.appendChild(option);
-      }
-    }
-
-    function parseVoiceInput(text) {
-      text = text.toLowerCase();
-
-      const weightMatch = text.match(/(\d+)\s*(kg|kilograms|kilos)?/);
-      const repsMatch = text.match(/(\d+)\s*reps?/);
-      const difficultyMatch = text.match(/(difficulty|rpe)\s*(\d+)/);
-
-      const weight = weightMatch ? parseInt(weightMatch[1]) : null;
-      const reps = repsMatch ? parseInt(repsMatch[1]) : null;
-      const difficulty = difficultyMatch ? parseInt(difficultyMatch[2]) : null;
-
-      return { weight, reps, difficulty };
-    }
-
-    function startVoiceInput() {
-      if (!('webkitSpeechRecognition' in window)) {
-        alert("Voice recognition not supported");
-        return;
-      }
-
-      const recognition = new webkitSpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      const debugMessage = document.getElementById('debugMessage');
-      const debugTranscribed = document.getElementById('debugTranscribed');
-
-      debugMessage.textContent = '🎙️ Listening... Please speak like: "12 kilograms 10 reps difficulty 7"';
-      debugTranscribed.textContent = '';
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        debugTranscribed.textContent = `📝 Transcribed: "${transcript}"`;
-
-        const { weight, reps, difficulty } = parseVoiceInput(transcript);
-
-        if (weight && reps && difficulty && currentExercise && currentUser) {
-          document.getElementById('weight').value = weight;
-          document.getElementById('reps').value = reps;
-          document.getElementById('rpe').value = difficulty;
-          submitSet();
-          debugMessage.textContent = '✅ Set added successfully.';
-        } else {
-          debugMessage.textContent = '❌ Could not parse all values. Please try again.';
-        }
-      };
-
-      recognition.onerror = (event) => {
-        debugMessage.textContent = `⚠️ Error: ${event.error}`;
-      };
-
-      recognition.onend = () => {
-        if (debugMessage.textContent === '🎙️ Listening... Please speak like: "12 kilograms 10 reps difficulty 7"') {
-          debugMessage.textContent = '🔇 Voice recognition ended without result.';
-        }
-      };
-
-      recognition.start();
-    }
-
-    window.onload = () => {
-      loadExercises();
-      renderTodayLog();
-      renderHistory();
-    };
-  </script>
+updateExerciseDropdown();
+renderTodayLog();
+</script>
 </body>
 </html>
