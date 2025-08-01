@@ -255,16 +255,27 @@
     }
 
     function parseThreeNumbers(text) {
-      const numbers = text.match(/\d+/g);
-      if (numbers && numbers.length >= 3) {
-        return {
-          weight: parseInt(numbers[0]),
-          reps: parseInt(numbers[1]),
-          difficulty: parseInt(numbers[2])
-        };
-      }
-      return { weight: null, reps: null, difficulty: null };
-    }
+  let numbers = text.match(/\d+/g);
+  
+  if (!numbers) return { weight: null, reps: null, difficulty: null };
+
+  // Fix combined number like "89"
+  if (numbers.length === 2 && numbers[1].length === 2) {
+    const split = numbers[1].split('');
+    numbers = [numbers[0], split[0], split[1]];
+  }
+
+  if (numbers.length >= 3) {
+    return {
+      weight: parseInt(numbers[0]),
+      reps: parseInt(numbers[1]),
+      difficulty: parseInt(numbers[2])
+    };
+  }
+
+  return { weight: null, reps: null, difficulty: null };
+}
+
 
     function startVoiceInput() {
       if (!('webkitSpeechRecognition' in window)) {
