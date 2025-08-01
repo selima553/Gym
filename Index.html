@@ -73,10 +73,12 @@
       display: block;
     }
 
-    #debugMessage {
+    #debugMessage, #debugTranscribed {
       color: #555;
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 6px;
+      white-space: pre-wrap;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -107,6 +109,7 @@
       <input type="number" id="reps" placeholder="Reps">
       <input type="number" id="rpe" placeholder="RPE (1-10)">
       <button onclick="submitSet()">Submit Set</button>
+      <div id="debugTranscribed"></div>
       <div id="debugMessage"></div>
       <button class="mic-btn" onclick="startVoiceInput()">🎤</button>
     </div>
@@ -159,6 +162,8 @@
 
     function handleExerciseChange(name) {
       currentExercise = name;
+      document.getElementById('debugMessage').textContent = '';
+      document.getElementById('debugTranscribed').textContent = '';
     }
 
     function startSet(user) {
@@ -170,6 +175,8 @@
       const userCount = setCounts[user][currentExercise] || 1;
       document.getElementById("setInfo").textContent = `User: ${user}, Exercise: ${currentExercise}, Set: ${userCount}`;
       document.getElementById("setDetails").style.display = "block";
+      document.getElementById('debugMessage').textContent = '';
+      document.getElementById('debugTranscribed').textContent = '';
     }
 
     function submitSet() {
@@ -177,6 +184,11 @@
       const reps = document.getElementById("reps").value;
       const rpe = document.getElementById("rpe").value;
       const set = setCounts[currentUser][currentExercise] || 1;
+
+      if (!weight || !reps || !rpe) {
+        alert("Please fill in weight, reps, and RPE.");
+        return;
+      }
 
       const entry = {
         user: currentUser,
@@ -199,6 +211,8 @@
       document.getElementById("weight").value = '';
       document.getElementById("reps").value = '';
       document.getElementById("rpe").value = '';
+      document.getElementById('debugMessage').textContent = '';
+      document.getElementById('debugTranscribed').textContent = '';
     }
 
     function renderLogItem(entry) {
@@ -240,6 +254,20 @@
       }
     }
 
+    function parseVoiceInput(text) {
+      text = text.toLowerCase();
+
+      const weightMatch = text.match(/(\d+)\s*(kg|kilograms|kilos)?/);
+      const repsMatch = text.match(/(\d+)\s*reps?/);
+      const difficultyMatch = text.match(/(difficulty|rpe)\s*(\d+)/);
+
+      const weight = weightMatch ? parseInt(weightMatch[1]) : null;
+      const reps = repsMatch ? parseInt(repsMatch[1]) : null;
+      const difficulty = difficultyMatch ? parseInt(difficultyMatch[2]) : null;
+
+      return { weight, reps, difficulty };
+    }
+
     function startVoiceInput() {
       if (!('webkitSpeechRecognition' in window)) {
         alert("Voice recognition not supported");
@@ -251,30 +279,36 @@
       recognition.interimResults = false;
       recognition.maxAlternatives = 1;
 
-      const debug = document.getElementById('debugMessage');
-      debug.textContent = '🎙️ Listening... Please speak set like: "12 kilograms 10 reps difficulty 7"';
+      const debugMessage = document.getElementById('debugMessage');
+      const debugTranscribed = document.getElementById('debugTranscribed');
+
+      debugMessage.textContent = '🎙️ Listening... Please speak like: "12 kilograms 10 reps difficulty 7"';
+      debugTranscribed.textContent = '';
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
-        debug.textContent = `📝 Heard: "${transcript}"`;
-        const match = transcript.match(/(\d+)\s*(kg|kilograms)?\s*(\d+)\s*(reps)?\s*(difficulty)?\s*(\d+)/i);
-        if (match) {
-          document.getElementById('weight').value = match[1];
-          document.getElementById('reps').value = match[3];
-          document.getElementById('rpe').value = match[6];
+        debugTranscribed.textContent = `📝 Transcribed: "${transcript}"`;
+
+        const { weight, reps, difficulty } = parseVoiceInput(transcript);
+
+        if (weight && reps && difficulty && currentExercise && currentUser) {
+          document.getElementById('weight').value = weight;
+          document.getElementById('reps').value = reps;
+          document.getElementById('rpe').value = difficulty;
           submitSet();
+          debugMessage.textContent = '✅ Set added successfully.';
         } else {
-          debug.textContent = '❌ Could not parse the spoken input. Please try again.';
+          debugMessage.textContent = '❌ Could not parse all values. Please try again.';
         }
       };
 
       recognition.onerror = (event) => {
-        debug.textContent = `⚠️ Error: ${event.error}`;
+        debugMessage.textContent = `⚠️ Error: ${event.error}`;
       };
 
       recognition.onend = () => {
-        if (debug.textContent === '🎙️ Listening... Please speak set like: "12 kilograms 10 reps difficulty 7"') {
-          debug.textContent = '🔇 Voice recognition ended without result.';
+        if (debugMessage.textContent === '🎙️ Listening... Please speak like: "12 kilograms 10 reps difficulty 7"') {
+          debugMessage.textContent = '🔇 Voice recognition ended without result.';
         }
       };
 
