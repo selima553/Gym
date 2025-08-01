@@ -6,39 +6,28 @@
   <title>Gym Tracker</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
       margin: 0;
-      background: #f0f2f5;
       padding: 10px;
     }
 
     h1 {
       text-align: center;
-      margin-top: 10px;
+      margin: 10px 0;
     }
 
     nav {
       display: flex;
-      justify-content: space-around;
-      background: #fff;
-      padding: 10px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      justify-content: center;
+      margin-bottom: 15px;
     }
 
     nav button {
       flex: 1;
       padding: 10px;
-      border: none;
-      background: #e0e0e0;
-      font-weight: bold;
-    }
-
-    nav button.active {
-      background: #007bff;
-      color: white;
+      margin: 0 5px;
+      font-size: 16px;
     }
 
     section {
@@ -50,274 +39,329 @@
     }
 
     input, select, button {
-      padding: 10px;
-      margin: 8px 0;
-      font-size: 16px;
+      display: block;
       width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #logList, #historyList {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 5px;
       border-radius: 5px;
-      border: 1px solid #ccc;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .user-buttons {
       display: flex;
+      justify-content: space-between;
       gap: 10px;
     }
 
     .user-buttons button {
       flex: 1;
-      background: #007bff;
+    }
+
+    #maxWeightDisplay {
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .group-title {
+      font-weight: bold;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+
+    .mic-button {
+      width: 100%;
+      background-color: #e91e63;
       color: white;
       border: none;
-    }
-
-    .log-group {
-      background: white;
+      border-radius: 4px;
+      font-size: 16px;
       padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
 
-    .log-group h4 {
-      margin-top: 0;
-      border-bottom: 1px solid #ccc;
-      padding-bottom: 4px;
-    }
-
-    .log-entry {
-      margin-left: 10px;
-      padding: 4px 0;
-    }
-
-    .edit-btn {
-      float: right;
-      background: transparent;
-      border: none;
-      color: #007bff;
-      cursor: pointer;
-    }
-
-    #filters {
+    .filters {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
 
-<h1>🏋️ Gym Tracker</h1>
+  <h1>🏋️ Gym Tracker</h1>
 
-<nav>
-  <button onclick="switchTab('home')" id="btn-home" class="active">Home</button>
-  <button onclick="switchTab('history')" id="btn-history">History</button>
-</nav>
+  <nav>
+    <button onclick="switchTab('workout')">Home</button>
+    <button onclick="switchTab('history')">History</button>
+  </nav>
 
-<section id="home" class="active">
-  <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
-    <option value="">-- Select Exercise --</option>
-  </select>
-  <input type="text" id="newExercise" placeholder="Add new exercise" />
-  <button onclick="addExercise()">Add Exercise</button>
-
-  <div class="user-buttons">
-    <button onclick="startSet('Selim')">Selim</button>
-    <button onclick="startSet('Friend')">Friend</button>
-  </div>
-
-  <div id="setDetails" style="display:none;">
-    <p id="setInfo"></p>
-    <input type="number" id="weight" placeholder="Weight (kg)" />
-    <input type="number" id="reps" placeholder="Reps" />
-    <input type="number" id="rpe" placeholder="RPE (1-10)" />
-    <button onclick="submitSet()">Submit Set</button>
-  </div>
-
-  <h3>Today's Log</h3>
-  <div id="logList"></div>
-</section>
-
-<section id="history">
-  <div id="filters">
-    <select id="filterExercise" onchange="renderHistory()">
-      <option value="">-- All Exercises --</option>
+  <section id="workout" class="active">
+    <select id="exerciseSelect" onchange="handleExerciseChange(this.value)">
+      <option value="">-- Select Exercise --</option>
     </select>
-    <select id="filterDate" onchange="renderHistory()">
-      <option value="">-- All Dates --</option>
-    </select>
-  </div>
-  <div id="historyList"></div>
-</section>
+    <input type="text" id="newExercise" placeholder="Add new exercise" />
+    <button onclick="addExercise()">Add Exercise</button>
+    <div id="maxWeightDisplay"></div>
 
-<script>
-  const today = new Date().toISOString().split("T")[0];
-  let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
-  let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
-  let setCounts = JSON.parse(localStorage.getItem("setCounts")) || {};
-  let currentExercise = '';
-  let currentUser = '';
+    <div class="user-buttons">
+      <button onclick="startSet('Selim')">Selim</button>
+      <button onclick="startSet('Friend')">Friend</button>
+    </div>
 
-  function switchTab(tabId) {
-    document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.getElementById('btn-' + tabId).classList.add('active');
+    <div id="setDetails" style="display:none;">
+      <p id="setInfo"></p>
+      <input type="number" id="weight" placeholder="Weight (kg)">
+      <input type="number" id="reps" placeholder="Reps">
+      <input type="number" id="rpe" placeholder="RPE (1-10)">
+      <button onclick="submitSet()">Submit Set</button>
+      <button class="mic-button" onclick="startVoiceInput()">🎤 Voice Input</button>
+    </div>
 
-    if (tabId === 'history') renderHistory();
-  }
+    <h3>Today's Log</h3>
+    <ul id="logList"></ul>
+  </section>
 
-  function addExercise() {
-    const name = document.getElementById('newExercise').value.trim();
-    if (name && !exercises.includes(name)) {
-      exercises.push(name);
-      localStorage.setItem("exercises", JSON.stringify(exercises));
-      updateExerciseDropdowns();
-      document.getElementById('exerciseSelect').value = name;
-      handleExerciseChange(name);
-      document.getElementById('newExercise').value = '';
+  <section id="history">
+    <div class="filters">
+      <select id="dateFilter" onchange="renderHistory()"></select>
+      <select id="exerciseFilter" onchange="renderHistory()"></select>
+    </div>
+    <h3>All History</h3>
+    <ul id="historyList"></ul>
+  </section>
+
+  <script>
+    const today = new Date().toISOString().split("T")[0];
+    let workoutLog = JSON.parse(localStorage.getItem("workoutLog")) || [];
+    let exercises = JSON.parse(localStorage.getItem("exercises")) || [];
+
+    let setCounts = JSON.parse(localStorage.getItem("setCounts")) || {};
+    let currentExercise = '';
+    let currentUser = '';
+
+    function switchTab(tabId) {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+      document.getElementById(tabId).classList.add("active");
     }
-  }
 
-  function updateExerciseDropdowns() {
-    const selects = [document.getElementById('exerciseSelect'), document.getElementById('filterExercise')];
-    selects.forEach(select => {
-      select.innerHTML = '<option value="">-- Select Exercise --</option>';
-      exercises.forEach(name => {
+    function addExercise() {
+      const name = document.getElementById('newExercise').value.trim();
+      if (name && !exercises.includes(name)) {
+        exercises.push(name);
+        localStorage.setItem("exercises", JSON.stringify(exercises));
+        const option = document.createElement('option');
+        option.value = name;
+        option.text = name;
+        document.getElementById('exerciseSelect').appendChild(option);
+        document.getElementById('newExercise').value = '';
+      }
+    }
+
+    function handleExerciseChange(name) {
+      currentExercise = name;
+      updateMaxWeightDisplay(name);
+    }
+
+    function startSet(user) {
+      if (!currentExercise) {
+        alert("Please select an exercise first.");
+        return;
+      }
+      currentUser = user;
+      const key = `${user}_${currentExercise}_${today}`;
+      if (!setCounts[key]) setCounts[key] = 1;
+      document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[key]}`;
+      document.getElementById("setDetails").style.display = "block";
+    }
+
+    function submitSet() {
+      const weight = document.getElementById("weight").value;
+      const reps = document.getElementById("reps").value;
+      const rpe = document.getElementById("rpe").value;
+
+      const key = `${currentUser}_${currentExercise}_${today}`;
+      const entry = {
+        user: currentUser,
+        exercise: currentExercise,
+        set: setCounts[key],
+        weight,
+        reps,
+        rpe,
+        date: today
+      };
+
+      workoutLog.push(entry);
+      setCounts[key]++;
+      localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
+      localStorage.setItem("setCounts", JSON.stringify(setCounts));
+
+      document.getElementById("weight").value = '';
+      document.getElementById("reps").value = '';
+      document.getElementById("rpe").value = '';
+      document.getElementById("setDetails").style.display = "none";
+
+      renderTodayLog();
+      updateMaxWeightDisplay(currentExercise);
+    }
+
+    function renderTodayLog() {
+      const logList = document.getElementById("logList");
+      logList.innerHTML = '';
+      const grouped = {};
+
+      for (let entry of workoutLog) {
+        if (entry.date !== today) continue;
+        if (!grouped[entry.user]) grouped[entry.user] = {};
+        if (!grouped[entry.user][entry.exercise]) grouped[entry.user][entry.exercise] = [];
+        grouped[entry.user][entry.exercise].push(entry);
+      }
+
+      for (let user in grouped) {
+        const userTitle = document.createElement("div");
+        userTitle.className = 'group-title';
+        userTitle.textContent = user;
+        logList.appendChild(userTitle);
+        for (let workout in grouped[user]) {
+          const workoutTitle = document.createElement("div");
+          workoutTitle.textContent = workout;
+          logList.appendChild(workoutTitle);
+          grouped[user][workout].forEach(entry => {
+            const item = document.createElement("li");
+            item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+            logList.appendChild(item);
+          });
+        }
+      }
+    }
+
+    function updateMaxWeightDisplay(exerciseName) {
+      let selimMax = 0, friendMax = 0;
+      for (let entry of workoutLog) {
+        if (entry.exercise === exerciseName) {
+          const weight = parseFloat(entry.weight);
+          if (entry.user === 'Selim' && weight > selimMax) selimMax = weight;
+          if (entry.user === 'Friend' && weight > friendMax) friendMax = weight;
+        }
+      }
+      document.getElementById('maxWeightDisplay').textContent =
+        `Max Weight - Selim: ${selimMax}kg | Friend: ${friendMax}kg`;
+    }
+
+    function renderHistory() {
+      const selectedDate = document.getElementById("dateFilter").value;
+      const selectedExercise = document.getElementById("exerciseFilter").value;
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+
+      const grouped = {};
+
+      for (let entry of workoutLog) {
+        if (selectedDate && entry.date !== selectedDate) continue;
+        if (selectedExercise && entry.exercise !== selectedExercise) continue;
+        if (!grouped[entry.date]) grouped[entry.date] = {};
+        if (!grouped[entry.date][entry.user]) grouped[entry.date][entry.user] = {};
+        if (!grouped[entry.date][entry.user][entry.exercise]) grouped[entry.date][entry.user][entry.exercise] = [];
+        grouped[entry.date][entry.user][entry.exercise].push(entry);
+      }
+
+      for (let date in grouped) {
+        const dateTitle = document.createElement("div");
+        dateTitle.className = 'group-title';
+        dateTitle.textContent = `📅 ${date}`;
+        historyList.appendChild(dateTitle);
+        for (let user in grouped[date]) {
+          const userTitle = document.createElement("div");
+          userTitle.className = 'group-title';
+          userTitle.textContent = `👤 ${user}`;
+          historyList.appendChild(userTitle);
+          for (let workout in grouped[date][user]) {
+            const workoutTitle = document.createElement("div");
+            workoutTitle.textContent = workout;
+            historyList.appendChild(workoutTitle);
+            grouped[date][user][workout].forEach(entry => {
+              const item = document.createElement("li");
+              item.textContent = `Set ${entry.set}: ${entry.weight}kg x ${entry.reps} (RPE ${entry.rpe})`;
+              historyList.appendChild(item);
+            });
+          }
+        }
+      }
+    }
+
+    function loadExercises() {
+      const select = document.getElementById("exerciseSelect");
+      for (let name of exercises) {
         const option = document.createElement("option");
         option.value = name;
         option.text = name;
         select.appendChild(option);
+      }
+
+      const exerciseFilter = document.getElementById("exerciseFilter");
+      exerciseFilter.innerHTML = '<option value="">All Exercises</option>';
+      for (let name of exercises) {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.text = name;
+        exerciseFilter.appendChild(opt);
+      }
+    }
+
+    function populateDateDropdown() {
+      const dateFilter = document.getElementById("dateFilter");
+      const dates = [...new Set(workoutLog.map(entry => entry.date))];
+      dateFilter.innerHTML = '<option value="">All Dates</option>';
+      dates.forEach(date => {
+        const opt = document.createElement("option");
+        opt.value = date;
+        opt.text = date;
+        dateFilter.appendChild(opt);
       });
-    });
-  }
-
-  function handleExerciseChange(name) {
-    currentExercise = name;
-  }
-
-  function startSet(user) {
-    if (!currentExercise) {
-      alert("Please select an exercise first.");
-      return;
-    }
-    currentUser = user;
-    const key = `${user}_${currentExercise}`;
-    if (!setCounts[key]) setCounts[key] = 1;
-    document.getElementById("setInfo").textContent = `User: ${user}, Set: ${setCounts[key]} (${currentExercise})`;
-    document.getElementById("setDetails").style.display = "block";
-  }
-
-  function submitSet() {
-    const weight = document.getElementById("weight").value;
-    const reps = document.getElementById("reps").value;
-    const rpe = document.getElementById("rpe").value;
-    const key = `${currentUser}_${currentExercise}`;
-    const setNum = setCounts[key] || 1;
-
-    const entry = {
-      user: currentUser,
-      exercise: currentExercise,
-      set: setNum,
-      weight,
-      reps,
-      rpe,
-      date: today
-    };
-
-    workoutLog.push(entry);
-    setCounts[key] = setNum + 1;
-
-    localStorage.setItem("workoutLog", JSON.stringify(workoutLog));
-    localStorage.setItem("setCounts", JSON.stringify(setCounts));
-
-    document.getElementById("setDetails").style.display = "none";
-    document.getElementById("weight").value = '';
-    document.getElementById("reps").value = '';
-    document.getElementById("rpe").value = '';
-
-    renderTodayLog();
-  }
-
-  function renderTodayLog() {
-    const logContainer = document.getElementById("logList");
-    logContainer.innerHTML = '';
-    const grouped = {};
-
-    for (let entry of workoutLog) {
-      if (entry.date !== today) continue;
-      if (!grouped[entry.user]) grouped[entry.user] = {};
-      if (!grouped[entry.user][entry.exercise]) grouped[entry.user][entry.exercise] = [];
-      grouped[entry.user][entry.exercise].push(entry);
     }
 
-    for (let user in grouped) {
-      const userGroup = document.createElement('div');
-      userGroup.className = 'log-group';
-      userGroup.innerHTML = `<h4>${user}</h4>`;
-      for (let ex in grouped[user]) {
-        userGroup.innerHTML += `<strong>${ex}</strong>`;
-        grouped[user][ex].forEach(set => {
-          userGroup.innerHTML += `<div class="log-entry">Set ${set.set}: ${set.weight}kg x ${set.reps} (RPE ${set.rpe})</div>`;
-        });
+    function startVoiceInput() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert('Voice recognition not supported.');
+        return;
       }
-      logContainer.appendChild(userGroup);
-    }
-  }
 
-  function renderHistory() {
-    const filterEx = document.getElementById("filterExercise").value;
-    const filterDate = document.getElementById("filterDate").value;
-    const list = document.getElementById("historyList");
-    list.innerHTML = '';
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
 
-    const grouped = {};
-
-    for (let entry of workoutLog) {
-      if (filterEx && entry.exercise !== filterEx) continue;
-      if (filterDate && entry.date !== filterDate) continue;
-
-      if (!grouped[entry.date]) grouped[entry.date] = {};
-      if (!grouped[entry.date][entry.user]) grouped[entry.date][entry.user] = {};
-      if (!grouped[entry.date][entry.user][entry.exercise]) grouped[entry.date][entry.user][entry.exercise] = [];
-      grouped[entry.date][entry.user][entry.exercise].push(entry);
-    }
-
-    for (let date in grouped) {
-      const dateGroup = document.createElement("div");
-      dateGroup.className = 'log-group';
-      dateGroup.innerHTML = `<h4>${date}</h4>`;
-      for (let user in grouped[date]) {
-        dateGroup.innerHTML += `<strong>${user}</strong><br>`;
-        for (let ex in grouped[date][user]) {
-          dateGroup.innerHTML += `<em>${ex}</em><br>`;
-          grouped[date][user][ex].forEach(set => {
-            dateGroup.innerHTML += `<div class="log-entry">Set ${set.set}: ${set.weight}kg x ${set.reps} (RPE ${set.rpe})</div>`;
-          });
+      recognition.onresult = (event) => {
+        const result = event.results[0][0].transcript.toLowerCase();
+        const match = result.match(/(\d+)\s*(kg|kilograms)?\s*(\d+)?\s*(reps)?\s*(difficulty)?\s*(\d+)?/);
+        if (match) {
+          document.getElementById("weight").value = match[1];
+          if (match[3]) document.getElementById("reps").value = match[3];
+          if (match[6]) document.getElementById("rpe").value = match[6];
+        } else {
+          alert("Could not understand set. Try: '12 kilograms 12 reps difficulty 7'");
         }
-      }
-      list.appendChild(dateGroup);
+      };
+
+      recognition.start();
     }
-  }
 
-  function populateFilterDates() {
-    const dates = new Set(workoutLog.map(entry => entry.date));
-    const dateSelect = document.getElementById("filterDate");
-    dateSelect.innerHTML = '<option value="">-- All Dates --</option>';
-    [...dates].sort((a,b) => b.localeCompare(a)).forEach(date => {
-      const opt = document.createElement("option");
-      opt.value = date;
-      opt.text = date;
-      dateSelect.appendChild(opt);
-    });
-  }
-
-  window.onload = () => {
-    updateExerciseDropdowns();
-    populateFilterDates();
-    renderTodayLog();
-  };
-</script>
-
+    window.onload = () => {
+      loadExercises();
+      populateDateDropdown();
+      renderTodayLog();
+      renderHistory();
+    };
+  </script>
 </body>
 </html>
