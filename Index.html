@@ -251,6 +251,13 @@
       box-shadow: 0 8px 15px rgb(55 48 163 / 0.7);
     }
 
+    .log-detail {
+      margin: 0.25rem 0;
+      padding: 0.3rem 0.5rem;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
     @media (max-width: 480px) {
       main {
         padding: 1rem 1rem 3rem;
@@ -319,33 +326,22 @@
   </main>
 
   <script>
-    // Persistent data keys - using your preferred key names
+    // Persistent data keys
     const LOGS_KEY = 'gymLogs';
-    const WORKOUTS_KEY = 'exercises';  // Changed to match your previous implementation
+    const WORKOUTS_KEY = 'gymWorkouts';
     
     // Variables
     let workouts = [];
     let logs = [];
-    let todayKey = new Date().toISOString().split('T')[0];
     let currentUser = null;
     
     document.addEventListener('DOMContentLoaded', () => {
-      // Load or initialize workouts - with migration support
-      let savedWorkouts = localStorage.getItem(WORKOUTS_KEY);
-      if (savedWorkouts) {
-        try {
-          workouts = JSON.parse(savedWorkouts);
-        } catch (e) {
-          console.error("Error parsing workouts from localStorage", e);
-          // Reset to default if corrupted
-          workouts = ["Bench Press", "Squat", "Deadlift", "Leg Press"];
-          localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts));
-        }
-      } else {
-        // If no saved workouts, initialize with your Leg Press
-        workouts = ["Bench Press", "Squat", "Deadlift", "Leg Press"];
-        localStorage.setItem(WORKOUTS_KEY, JSON.stringify(workouts));
-      }
+      // Get today's date in YYYY-MM-DD format
+      const getToday = () => new Date().toISOString().split('T')[0];
+      
+      // Load or initialize workouts
+      const savedWorkouts = localStorage.getItem(WORKOUTS_KEY);
+      workouts = savedWorkouts ? JSON.parse(savedWorkouts) : ["Bench Press", "Squat", "Deadlift", "Leg Press"];
       
       // Load or initialize logs
       const savedLogs = localStorage.getItem(LOGS_KEY);
@@ -437,7 +433,7 @@
         const weight = +document.getElementById('weight').value;
         const reps = +document.getElementById('reps').value;
         const rpe = +document.getElementById('rpe').value;
-        const date = todayKey;
+        const date = getToday();
 
         if (!currentUser) return alert("Please select a user.");
         if (!workout || workout === "-- Select Exercise --") return alert("Please select a workout.");
@@ -463,102 +459,153 @@
       // Render today's log
       function renderToday() {
         todayLogEl.innerHTML = '';
+        const today = getToday();
+        
+        // Group logs by user and then by workout
+        const groupedLogs = {};
+        
+        logs.forEach(log => {
+          if (log.date !== today) return;
+          
+          if (!groupedLogs[log.user]) groupedLogs[log.user] = {};
+          if (!groupedLogs[log.user][log.workout]) groupedLogs[log.user][log.workout] = [];
+          
+          groupedLogs[log.user][log.workout].push(log);
+        });
+        
+        // Check if we have any logs for today
+        let hasLogs = false;
+        
         ['Selim', 'Friend'].forEach(user => {
-          const userLogs = logs.filter(log => log.user === user && log.date === todayKey);
-          if(userLogs.length === 0) return;
-
-          const workoutsToday = [...new Set(userLogs.map(log => log.workout))];
-
-          workoutsToday.forEach(workout => {
-            const logsForWorkout = userLogs.filter(log => log.workout === workout);
+          if (!groupedLogs[user]) return;
+          
+          Object.keys(groupedLogs[user]).forEach(workout => {
+            hasLogs = true;
+            const logsForWorkout = groupedLogs[user][workout];
             const maxWeight = Math.max(...logsForWorkout.map(log => log.weight));
+            
             const container = document.createElement('div');
             container.className = 'log-entry';
-
+            
             const header = document.createElement('div');
             header.className = 'log-header';
             header.textContent = `${user} -- ${workout} (Max: ${maxWeight}kg)`;
             container.appendChild(header);
-
+            
             logsForWorkout.forEach(log => {
               const line = document.createElement('div');
+              line.className = 'log-detail';
               line.textContent = `${log.reps} reps × ${log.weight}kg (RPE ${log.rpe})`;
               container.appendChild(line);
             });
-
+            
             todayLogEl.appendChild(container);
           });
         });
-
-        if(todayLogEl.innerHTML === '') {
+        
+        if (!hasLogs) {
           todayLogEl.textContent = 'No logs for today yet.';
         }
       }
 
       // Setup filters in history tab
       function setupFilters() {
-        updateFilterOptions();
+        // Get unique dates and workouts
+        const uniqueDates = [...new Set(logs.map(log => log.date))].sort().reverse();
+        const uniqueWorkouts = [...new Set(logs.map(log => log.workout))].sort();
+        
+        // Populate date filter
+        dateFilter.innerHTML = '<option value="">All Dates</option>';
+        uniqueDates.forEach(date => {
+          const option = document.createElement('option');
+          option.value = date;
+          option.textContent = date;
+          dateFilter.appendChild(option);
+        });
+        
+        // Populate workout filter
+        workoutFilter.innerHTML = '<option value="">All Workouts</option>';
+        uniqueWorkouts.forEach(workout => {
+          const option = document.createElement('option');
+          option.value = workout;
+          option.textContent = workout;
+          workoutFilter.appendChild(option);
+        });
+        
+        // Set up event listeners
         dateFilter.addEventListener('change', renderHistory);
         workoutFilter.addEventListener('change', renderHistory);
-      }
-
-      function updateFilterOptions() {
-        const uniqueDates = [...new Set(logs.map(log => log.date))].sort().reverse();
-        dateFilter.innerHTML = `<option value="">All Dates</option>` + 
-          uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
       }
 
       // Render history log
       function renderHistory() {
         const container = document.getElementById('history-log');
         container.innerHTML = '';
-
+        
         const selectedDate = dateFilter.value;
         const selectedWorkout = workoutFilter.value;
-
-        const filtered = logs.filter(log =>
-          (!selectedDate || log.date === selectedDate) &&
-          (!selectedWorkout || log.workout === selectedWorkout)
-        );
-
-        if(filtered.length === 0) {
+        
+        // Filter logs based on selections
+        const filtered = logs.filter(log => {
+          const dateMatch = !selectedDate || log.date === selectedDate;
+          const workoutMatch = !selectedWorkout || log.workout === selectedWorkout;
+          return dateMatch && workoutMatch;
+        });
+        
+        if (filtered.length === 0) {
           container.textContent = 'No history entries found for selected filters.';
           return;
         }
-
+        
+        // Group by date, then by user, then by workout
         const grouped = {};
+        
         filtered.forEach(log => {
           if (!grouped[log.date]) grouped[log.date] = {};
           if (!grouped[log.date][log.user]) grouped[log.date][log.user] = {};
-          if (!grouped[log.date][log.user][log.workout]) grouped[log.date][log.user][log.workout] = [];
+          if (!grouped[log.date][log.user][log.workout]) {
+            grouped[log.date][log.user][log.workout] = [];
+          }
           grouped[log.date][log.user][log.workout].push(log);
         });
-
-        for (const date in grouped) {
+        
+        // Sort dates from newest to oldest
+        const sortedDates = Object.keys(grouped).sort().reverse();
+        
+        sortedDates.forEach(date => {
           const dateBlock = document.createElement('div');
           dateBlock.className = 'log-header';
           dateBlock.textContent = date;
           container.appendChild(dateBlock);
-
-          for (const user in grouped[date]) {
-            for (const workout in grouped[date][user]) {
-              const logsArr = grouped[date][user][workout];
+          
+          const users = grouped[date];
+          Object.keys(users).forEach(user => {
+            const workouts = users[user];
+            Object.keys(workouts).forEach(workout => {
+              const logsArr = workouts[workout];
+              
               const div = document.createElement('div');
               div.className = 'history-entry';
-
+              
               const strong = document.createElement('strong');
               strong.textContent = `${user} -- ${workout}`;
               div.appendChild(strong);
-
+              
               const details = document.createElement('div');
               details.style.marginTop = '0.4rem';
-              details.innerHTML = logsArr.map(l => `${l.reps} reps × ${l.weight}kg (RPE ${l.rpe})`).join('<br/>');
+              
+              logsArr.forEach(log => {
+                const detail = document.createElement('div');
+                detail.className = 'log-detail';
+                detail.textContent = `${log.reps} reps × ${log.weight}kg (RPE ${log.rpe})`;
+                details.appendChild(detail);
+              });
+              
               div.appendChild(details);
-
               container.appendChild(div);
-            }
-          }
-        }
+            });
+          });
+        });
       }
 
       // Debug helper
@@ -609,7 +656,8 @@
               return;
             }
             const w = workoutSelect.value;
-            logs = logs.filter(log => !(log.user === currentUser && log.workout === w && log.date === todayKey));
+            const today = getToday();
+            logs = logs.filter(log => !(log.user === currentUser && log.workout === w && log.date === today));
             localStorage.setItem(LOGS_KEY, JSON.stringify(logs));
             renderToday();
             logDebug("🛑 Cleared sets for this workout and user.");
@@ -649,7 +697,7 @@
           history.classList.add('active');
           navHome.classList.remove('active');
           navHistory.classList.add('active');
-          updateFilterOptions();
+          setupFilters();
           renderHistory();
         }
       }
@@ -663,8 +711,8 @@
       navHome.addEventListener('click', () => switchTab('home'));
       navHistory.addEventListener('click', () => switchTab('history'));
       
-      // Debug info
-      logDebug(`App initialized with ${workouts.length} workouts`);
+      // Initial debug info
+      logDebug(`App initialized with ${workouts.length} workouts and ${logs.length} log entries`);
     });
   </script>
 </body>
