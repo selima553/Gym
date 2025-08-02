@@ -850,6 +850,37 @@
 
             logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
         });
+        
+// Add this function to show max weight for each user
+function showMaxWeight() {
+    if (!currentExercise) {
+        logDebug("⚠️ Please select an exercise first");
+        return;
+    }
+
+    const userMaxWeights = {};
+    
+    workoutLog.forEach(log => {
+        if (log.exercise === currentExercise) {
+            if (!userMaxWeights[log.user] || log.weight > userMaxWeights[log.user]) {
+                userMaxWeights[log.user] = log.weight;
+            }
+        }
+    });
+
+    let maxWeightMessage = `🏆 Max weights for ${currentExercise}:\n`;
+    for (const user in userMaxWeights) {
+        maxWeightMessage += `${user}: ${userMaxWeights[user]}kg\n`;
+    }
+
+    logDebug(maxWeightMessage);
+}
+
+// Add this button to your HTML (place it near the workout select dropdown)
+// <button class="btn" id="showMaxBtn">Show Max Weight</button>
+
+// Add this event listener in your DOMContentLoaded
+document.getElementById('showMaxBtn').addEventListener('click', showMaxWeight); 
     </script>
 </body>
 </html>
