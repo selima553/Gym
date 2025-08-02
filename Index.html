@@ -464,6 +464,64 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTodayLog();
   setupFilters();
   
+  // Event delegation for edit buttons
+  document.addEventListener('click', function(e) {
+    // Handle edit button clicks
+    if (e.target.classList.contains('edit-btn')) {
+      const logEntry = e.target.closest('.log-entry');
+      if (!logEntry) return;
+      
+      const setId = parseInt(logEntry.dataset.id);
+      const set = workoutLog.find(s => s.id === setId);
+      if (!set) return;
+      
+      // Remove any existing edit forms first
+      document.querySelectorAll('.edit-form').forEach(form => form.remove());
+      
+      // Create and insert edit form
+      const editForm = document.createElement('div');
+      editForm.className = 'edit-form';
+      editForm.innerHTML = `
+        <div class="form-row">
+          <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
+          <input type="number" value="${set.reps}" min="1" placeholder="Reps">
+          <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
+        </div>
+        <div class="form-actions">
+          <button class="save-btn">💾 Save</button>
+          <button class="cancel-btn">✕ Cancel</button>
+        </div>
+      `;
+      
+      logEntry.appendChild(editForm);
+      
+      // Focus on first input
+      editForm.querySelector('input').focus();
+    }
+    
+    // Handle save button clicks
+    if (e.target.classList.contains('save-btn')) {
+      const editForm = e.target.closest('.edit-form');
+      if (!editForm) return;
+      
+      const logEntry = editForm.closest('.log-entry');
+      const setId = parseInt(logEntry.dataset.id);
+      
+      const inputs = editForm.querySelectorAll('input');
+      const newWeight = inputs[0].value;
+      const newReps = inputs[1].value;
+      const newRpe = inputs[2].value;
+      
+      updateSet(setId, newWeight, newReps, newRpe);
+    }
+    
+    // Handle cancel button clicks
+    if (e.target.classList.contains('cancel-btn')) {
+      const editForm = e.target.closest('.edit-form');
+      if (editForm) editForm.remove();
+    }
+  });
+
   // Update workout dropdowns with "-- Select Exercise --" option
   function updateWorkoutDropdowns() {
     const selects = [workoutSelect, workoutFilter];
@@ -559,7 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rpe').value = '';
   }
 
-  // Render today's log - Corrected Logic
+  // Render today's log
   function renderTodayLog() {
     const container = document.getElementById('today-log');
     container.innerHTML = '';
@@ -591,43 +649,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `;
           
-          entry.querySelector('.edit-btn').addEventListener('click', (e) => {
-            // Find the set to edit
-            const setEntry = e.target.closest('.log-entry');
-            
-            // Only open one form at a time
-            if (setEntry.querySelector('.edit-form')) return;
-
-            // Create and insert the edit form
-            const form = document.createElement('div');
-            form.className = 'edit-form';
-            form.innerHTML = `
-              <div class="form-row">
-                <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
-                <input type="number" value="${set.reps}" min="1" placeholder="Reps">
-                <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
-              </div>
-              <div class="form-actions">
-                <button class="save-btn">💾 Save</button>
-                <button class="cancel-btn">✕ Cancel</button>
-              </div>
-            `;
-            
-            setEntry.appendChild(form);
-
-            form.querySelector('.save-btn').addEventListener('click', () => {
-              const newWeight = form.querySelector('input:nth-child(1)').value;
-              const newReps = form.querySelector('input:nth-child(2)').value;
-              const newRpe = form.querySelector('input:nth-child(3)').value;
-              updateSet(set.id, newWeight, newReps, newRpe);
-            });
-            
-            form.querySelector('.cancel-btn').addEventListener('click', () => {
-              form.remove();
-            });
-            
-          });
-          
           group.appendChild(entry);
         });
       }
@@ -640,11 +661,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Update a set - FIXED VERSION
+  // Update a set
   function updateSet(setId, weight, reps, rpe) {
-    // Convert to number if needed (fix for dataset string conversion)
-    const id = Number(setId);
-    const setIndex = workoutLog.findIndex(s => s.id === id);
+    const setIndex = workoutLog.findIndex(s => s.id === setId);
     
     if (setIndex === -1) {
       logDebug(`⚠️ Set not found: ${setId}`);
@@ -696,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
     workoutFilter.addEventListener('change', renderHistory);
   }
 
-  // Render history log - Corrected Logic
+  // Render history log
   function renderHistory() {
     const filterEx = workoutFilter.value;
     const filterDate = dateFilter.value;
@@ -734,42 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="edit-btn">✏️</button>
               </div>
             `;
-            
-            entry.querySelector('.edit-btn').addEventListener('click', (e) => {
-              // Find the set to edit
-              const setEntry = e.target.closest('.log-entry');
-              
-              // Only open one form at a time
-              if (setEntry.querySelector('.edit-form')) return;
-
-              // Create and insert the edit form
-              const form = document.createElement('div');
-              form.className = 'edit-form';
-              form.innerHTML = `
-                <div class="form-row">
-                  <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
-                  <input type="number" value="${set.reps}" min="1" placeholder="Reps">
-                  <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
-                </div>
-                <div class="form-actions">
-                  <button class="save-btn">💾 Save</button>
-                  <button class="cancel-btn">✕ Cancel</button>
-                </div>
-              `;
-              
-              setEntry.appendChild(form);
-
-              form.querySelector('.save-btn').addEventListener('click', () => {
-                const newWeight = form.querySelector('input:nth-child(1)').value;
-                const newReps = form.querySelector('input:nth-child(2)').value;
-                const newRpe = form.querySelector('input:nth-child(3)').value;
-                updateSet(set.id, newWeight, newReps, newRpe);
-              });
-              
-              form.querySelector('.cancel-btn').addEventListener('click', () => {
-                form.remove();
-              });
-            });
             
             dateGroup.appendChild(entry);
           });
