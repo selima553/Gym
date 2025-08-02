@@ -17,6 +17,18 @@
             --text-color: #0f172a;
             --card-bg: #f1f5f9;
             --border-color: #e2e8f0;
+            
+            /* User colors */
+            --selim-color: #3b82f6;
+            --friend-color: #10b981;
+            --selim-bg: rgba(59, 130, 246, 0.1);
+            --friend-bg: rgba(16, 185, 129, 0.1);
+            
+            /* Exercise colors */
+            --exercise-primary: #8b5cf6;
+            --exercise-secondary: #f59e0b;
+            --exercise-tertiary: #ef4444;
+            --exercise-quaternary: #06b6d4;
         }
 
         .dark-mode {
@@ -24,6 +36,8 @@
             --text-color: #f8fafc;
             --card-bg: #1e293b;
             --border-color: #334155;
+            --selim-bg: rgba(59, 130, 246, 0.2);
+            --friend-bg: rgba(16, 185, 129, 0.2);
         }
         
         * {
@@ -37,61 +51,100 @@
             background: var(--bg-color);
             color: var(--text-color);
             min-height: 100vh;
-            padding: 16px;
+            padding: 8px;
             transition: all 0.3s ease;
+            font-size: 16px;
+            line-height: 1.5;
         }
         
         .container {
-            max-width: 500px;
+            max-width: 100%;
             margin: 0 auto;
             background: var(--bg-color);
             border-radius: 16px;
             overflow: hidden;
         }
         
+        @media (min-width: 500px) {
+            .container {
+                max-width: 500px;
+            }
+            body {
+                padding: 16px;
+            }
+        }
+        
         header {
-            padding: 20px;
+            padding: 16px;
             text-align: center;
             position: relative;
         }
         
         h1 {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             margin-bottom: 8px;
             background: linear-gradient(90deg, #818cf8, #c7d2fe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media (min-width: 500px) {
+            h1 {
+                font-size: 1.8rem;
+            }
         }
         
         .theme-toggle {
             position: absolute;
-            right: 20px;
-            top: 20px;
+            right: 16px;
+            top: 16px;
             background: none;
             border: none;
             font-size: 1.2rem;
             cursor: pointer;
             color: var(--text-color);
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .theme-toggle:active {
+            transform: scale(0.95);
         }
         
         .tabs {
             display: flex;
             background: var(--card-bg);
             border-radius: 12px;
-            margin: 0 16px;
+            margin: 0 8px 16px;
             overflow: hidden;
+        }
+        
+        @media (min-width: 500px) {
+            .tabs {
+                margin: 0 16px 16px;
+            }
         }
         
         .tab-btn {
             flex: 1;
-            padding: 14px;
+            padding: 14px 8px;
             background: none;
             border: none;
             color: var(--text-color);
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        @media (min-width: 500px) {
+            .tab-btn {
+                padding: 14px;
+                font-size: 1rem;
+            }
         }
         
         .tab-btn.active {
@@ -100,7 +153,13 @@
         }
         
         .tab-content {
-            padding: 16px;
+            padding: 8px;
+        }
+        
+        @media (min-width: 500px) {
+            .tab-content {
+                padding: 16px;
+            }
         }
         
         .tab-pane {
@@ -125,13 +184,21 @@
         
         select, input {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             color: var(--text-color);
             font-size: 1rem;
             transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        @media (min-width: 500px) {
+            select, input {
+                padding: 14px;
+            }
         }
         
         select:focus, input:focus {
@@ -141,24 +208,37 @@
         }
         
         .input-row {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
             margin-bottom: 16px;
         }
         
-        .input-row > div {
-            flex: 1;
+        @media (max-width: 400px) {
+            .input-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
         }
         
         .action-row {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
             margin-bottom: 16px;
         }
         
+        @media (max-width: 400px) {
+            .action-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+        
         .user-select {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             margin-bottom: 16px;
             background: var(--card-bg);
             padding: 12px;
@@ -166,7 +246,6 @@
         }
         
         .user-btn {
-            flex: 1;
             padding: 12px;
             background: var(--card-bg);
             color: var(--text-color);
@@ -175,16 +254,22 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
         
         .user-btn.active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
+            transform: scale(1.02);
+        }
+        
+        .user-btn:active {
+            transform: scale(0.98);
         }
         
         .btn {
-            padding: 14px 20px;
+            padding: 12px 16px;
             background: var(--primary);
             color: white;
             border: none;
@@ -196,65 +281,156 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            flex: 1;
+            font-size: 0.9rem;
+            min-height: 48px;
+        }
+        
+        @media (min-width: 500px) {
+            .btn {
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
         }
         
         .btn:hover {
             background: var(--primary-dark);
         }
         
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
         .btn-mic {
             background: var(--card-bg);
             color: var(--primary);
             border: 1px solid var(--primary);
+            font-size: 1.2rem;
         }
         
         .log-container {
             margin-top: 20px;
         }
         
-        .log-group {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
+        .log-container h3 {
             margin-bottom: 16px;
-        }
-        
-        .log-group h4 {
-            margin-bottom: 12px;
-            color: var(--primary);
+            color: var(--text-color);
             font-size: 1.1rem;
         }
         
-        .log-group strong {
-            display: block;
-            margin: 12px 0 6px;
-            color: var(--text-color);
-            font-size: 1rem;
+        .log-group {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
         }
         
-        .log-group em {
-            display: block;
-            margin: 6px 0;
-            color: var(--gray);
-            font-style: normal;
+        @media (min-width: 500px) {
+            .log-group {
+                padding: 16px;
+            }
+        }
+        
+        .log-group .date-header {
+            margin-bottom: 12px;
+            color: var(--primary);
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .user-section {
+            margin: 12px 0;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .user-section.selim {
+            background: var(--selim-bg);
+            border-left-color: var(--selim-color);
+        }
+        
+        .user-section.friend {
+            background: var(--friend-bg);
+            border-left-color: var(--friend-color);
+        }
+        
+        .user-section .user-name {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-section.selim .user-name {
+            color: var(--selim-color);
+        }
+        
+        .user-section.friend .user-name {
+            color: var(--friend-color);
+        }
+        
+        .exercise-section {
+            margin: 8px 0;
+            padding: 8px;
+            background: rgba(139, 92, 246, 0.05);
+            border-radius: 6px;
+            border-left: 3px solid var(--exercise-primary);
+        }
+        
+        .exercise-name {
+            font-weight: 600;
             font-size: 0.9rem;
+            color: var(--exercise-primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .log-entry {
             background: var(--bg-color);
-            border-radius: 12px;
-            padding: 12px;
-            margin: 8px 0;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 6px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .log-entry:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         
         .log-detail {
             flex: 1;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        @media (min-width: 400px) {
+            .log-detail {
+                font-size: 0.9rem;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+        }
+        
+        .set-info {
+            font-weight: 600;
         }
         
         .edit-btn {
@@ -263,8 +439,18 @@
             color: var(--primary);
             cursor: pointer;
             font-size: 1rem;
-            padding: 4px;
+            padding: 6px;
             margin-left: 8px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .edit-btn:hover {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .edit-btn:active {
+            transform: scale(0.95);
         }
         
         .edit-form {
@@ -272,76 +458,209 @@
             padding: 12px;
             background: var(--card-bg);
             border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
         
         .form-row {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 8px;
             margin-bottom: 10px;
         }
         
         .form-row input {
-            flex: 1;
-            padding: 10px;
-            font-size: 0.9rem;
+            padding: 8px;
+            font-size: 0.85rem;
+        }
+        
+        @media (min-width: 400px) {
+            .form-row input {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
         }
         
         .form-actions {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
         
         .form-actions button {
             padding: 8px 12px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            min-height: 40px;
         }
         
         .debug {
-            margin-top: 16px;
-            padding: 12px;
+            margin-top: 12px;
+            padding: 10px;
             background: var(--card-bg);
             border-radius: 12px;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             color: var(--text-color);
             white-space: pre-wrap;
-            max-height: 120px;
+            max-height: 100px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
             font-family: monospace;
+            line-height: 1.3;
+        }
+        
+        @media (min-width: 500px) {
+            .debug {
+                padding: 12px;
+                font-size: 0.85rem;
+                max-height: 120px;
+            }
         }
         
         .filters {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
             margin-bottom: 16px;
         }
         
-        .filters > div {
-            flex: 1;
+        @media (max-width: 400px) {
+            .filters {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
         }
         
         .add-workout {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 8px;
             margin-bottom: 16px;
         }
         
-        .add-workout input {
-            flex: 1;
+        @media (max-width: 400px) {
+            .add-workout {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
         }
         
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+            font-style: italic;
+        }
+        
+        .user-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .selim .user-icon {
+            background: var(--selim-color);
+        }
+        
+        .friend .user-icon {
+            background: var(--friend-color);
+        }
+        
+        .exercise-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+            background: var(--exercise-primary);
+        }
+        
+        .max-weight-display {
+            margin-top: 12px;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--selim-bg), var(--friend-bg));
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .max-weight-display.show {
+            display: block;
+        }
+        
+        .max-weight-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 6px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .max-weight-item.selim {
+            background: var(--selim-bg);
+            color: var(--selim-color);
+            border-left: 4px solid var(--selim-color);
+        }
+        
+        .max-weight-item.friend {
+            background: var(--friend-bg);
+            color: var(--friend-color);
+            border-left: 4px solid var(--friend-color);
+        }
+        
+        .max-weight-value {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+        
+        .max-weight-header {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            opacity: 0.8;
+            font-weight: 600;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
         @media (max-width: 500px) {
-            .input-row, .action-row, .filters, .add-workout {
-                flex-direction: column;
+            .btn, .user-btn, .edit-btn {
+                min-height: 44px;
+                min-width: 44px;
             }
             
-            .container {
-                padding: 0;
+            input, select {
+                min-height: 44px;
             }
             
-            .tab-content {
-                padding: 12px;
+            .tab-btn {
+                min-height: 44px;
             }
+        }
+        
+        /* Loading states */
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        /* Better focus states for accessibility */
+        button:focus,
+        input:focus,
+        select:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
     </style>
 </head>
@@ -366,25 +685,26 @@
                     <select id="workoutSelect">
                         <option value="">-- Select Exercise --</option>
                     </select>
+                    <div id="maxWeightDisplay" class="max-weight-display"></div>
                 </div>
                 
                 <div class="user-select">
-                    <button class="user-btn" id="btnSelim">Selim</button>
-                    <button class="user-btn" id="btnFriend">Friend</button>
+                    <button class="user-btn" id="btnSelim">👤 Selim</button>
+                    <button class="user-btn" id="btnFriend">👥 Friend</button>
                 </div>
                 
                 <div class="input-row">
                     <div>
                         <label for="weight">Weight (kg)</label>
-                        <input type="number" id="weight" min="0" step="0.5" placeholder="e.g. 70">
+                        <input type="number" id="weight" min="0" step="0.5" placeholder="70">
                     </div>
                     <div>
                         <label for="reps">Reps</label>
-                        <input type="number" id="reps" min="1" placeholder="e.g. 8">
+                        <input type="number" id="reps" min="1" placeholder="8">
                     </div>
                     <div>
                         <label for="rpe">RPE</label>
-                        <input type="number" id="rpe" min="1" max="10" placeholder="1-10">
+                        <input type="number" id="rpe" min="1" max="10" placeholder="8">
                     </div>
                 </div>
                 
@@ -393,17 +713,17 @@
                         <span>💾 Save Set</span>
                     </button>
                     <button class="btn btn-mic" id="micBtn">
-                        <span>🎤 Voice</span>
+                        <span>🎤</span>
                     </button>
                 </div>
                 
                 <div class="add-workout">
                     <input type="text" id="newWorkoutInput" placeholder="New exercise name">
-                    <button class="btn" id="addWorkoutBtn">Add</button>
+                    <button class="btn" id="addWorkoutBtn">➕ Add</button>
                 </div>
                 
                 <div class="log-container">
-                    <h3>Today's Workout</h3>
+                    <h3>📅 Today's Workout</h3>
                     <div id="today-log"></div>
                 </div>
             </div>
@@ -426,7 +746,7 @@
                 </div>
                 
                 <div class="log-container">
-                    <h3>Workout History</h3>
+                    <h3>📊 Workout History</h3>
                     <div id="history-log"></div>
                 </div>
             </div>
@@ -434,19 +754,15 @@
     </div>
 
     <script>
-        // Persistent data keys
-        const LOGS_KEY = 'workoutLog';
-        const WORKOUTS_KEY = 'exercises';
-        const SET_COUNTS_KEY = 'setCounts';
-        const THEME_KEY = 'themePreference';
-
-        // Variables
-        const today = new Date().toISOString().split("T")[0];
-        let workoutLog = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
-        let exercises = JSON.parse(localStorage.getItem(WORKOUTS_KEY)) || ["Bench Press", "Squat", "Deadlift", "Leg Press"];
-        let setCounts = JSON.parse(localStorage.getItem(SET_COUNTS_KEY)) || {};
+        // Use in-memory storage instead of localStorage for Claude.ai compatibility
+        let workoutLog = [];
+        let exercises = ["Bench Press", "Squat", "Deadlift", "Leg Press"];
+        let setCounts = {};
         let currentExercise = '';
         let currentUser = '';
+        let isDarkMode = false;
+
+        const today = new Date().toISOString().split("T")[0];
 
         document.addEventListener('DOMContentLoaded', () => {
             // Get DOM elements
@@ -467,9 +783,7 @@
             const themeToggle = document.getElementById('themeToggle');
 
             // Initialize theme
-            const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-            document.body.classList.toggle('dark-mode', savedTheme === 'dark');
-            themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
 
             // Initialize app
             updateWorkoutDropdowns();
@@ -479,9 +793,8 @@
             // Theme toggle
             themeToggle.addEventListener('click', () => {
                 document.body.classList.toggle('dark-mode');
-                const isDark = document.body.classList.contains('dark-mode');
-                localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
-                themeToggle.textContent = isDark ? '☀️' : '🌙';
+                isDarkMode = document.body.classList.contains('dark-mode');
+                themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
             });
 
             // Event delegation for edit buttons
@@ -553,7 +866,6 @@
                 if (exercises.includes(newWorkout)) return alert('Workout already exists.');
 
                 exercises.push(newWorkout);
-                localStorage.setItem(WORKOUTS_KEY, JSON.stringify(exercises));
                 updateWorkoutDropdowns();
                 newWorkoutInput.value = '';
                 workoutSelect.value = newWorkout;
@@ -563,6 +875,64 @@
 
             function handleExerciseChange(name) {
                 currentExercise = name;
+                updateMaxWeightDisplay();
+            }
+            
+            function updateMaxWeightDisplay() {
+                const maxWeightEl = document.getElementById('maxWeightDisplay');
+                
+                if (!currentExercise) {
+                    maxWeightEl.classList.remove('show');
+                    return;
+                }
+                
+                const userMaxWeights = {};
+                
+                workoutLog.forEach(log => {
+                    if (log.exercise === currentExercise) {
+                        const weight = parseFloat(log.weight);
+                        if (!userMaxWeights[log.user] || weight > userMaxWeights[log.user]) {
+                            userMaxWeights[log.user] = weight;
+                        }
+                    }
+                });
+                
+                if (Object.keys(userMaxWeights).length === 0) {
+                    maxWeightEl.innerHTML = `
+                        <div class="max-weight-header">🏆 Max Weights</div>
+                        <div style="text-align: center; color: var(--gray); font-style: italic; padding: 10px;">
+                            No previous records for ${currentExercise}
+                        </div>
+                    `;
+                } else {
+                    let html = '<div class="max-weight-header">🏆 Max Weights</div>';
+                    
+                    // Always show both users, even if they haven't done this exercise
+                    ['Selim', 'Friend'].forEach(user => {
+                        const maxWeight = userMaxWeights[user];
+                        const userClass = user.toLowerCase();
+                        
+                        if (maxWeight) {
+                            html += `
+                                <div class="max-weight-item ${userClass}">
+                                    <span>👤 ${user}</span>
+                                    <span class="max-weight-value">${maxWeight}kg</span>
+                                </div>
+                            `;
+                        } else {
+                            html += `
+                                <div class="max-weight-item ${userClass}" style="opacity: 0.6;">
+                                    <span>👤 ${user}</span>
+                                    <span class="max-weight-value">No records</span>
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    maxWeightEl.innerHTML = html;
+                }
+                
+                maxWeightEl.classList.add('show');
             }
 
             function selectUser(user) {
@@ -599,11 +969,9 @@
                 workoutLog.push(entry);
                 setCounts[key] = setNum + 1;
                 
-                localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
-                localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
-                
                 clearSetInputs();
                 renderTodayLog();
+                updateMaxWeightDisplay(); // Update max weights after adding a set
                 logDebug(`➕ Set added: ${currentUser} - ${currentExercise} - ${weight}kg × ${reps} reps (RPE ${rpe})`);
             }
 
@@ -618,7 +986,7 @@
                 const todayWorkouts = workoutLog.filter(log => log.date === today);
                 
                 if (todayWorkouts.length === 0) {
-                    todayLogEl.textContent = 'No logs for today yet.';
+                    todayLogEl.innerHTML = '<div class="empty-state">No workouts logged today yet. Start your first set! 💪</div>';
                     return;
                 }
 
@@ -635,7 +1003,7 @@
                 });
 
                 if (filteredWorkouts.length === 0) {
-                    historyLogEl.textContent = 'No history entries found for selected filters.';
+                    historyLogEl.innerHTML = '<div class="empty-state">No history entries found for selected filters. 📊</div>';
                     return;
                 }
 
@@ -660,13 +1028,29 @@
                 for (const date in groupedData) {
                     const dateGroup = document.createElement("div");
                     dateGroup.className = "log-group";
-                    dateGroup.innerHTML = `<h4>${date}</h4>`;
+                    
+                    const dateHeader = document.createElement("div");
+                    dateHeader.className = "date-header";
+                    dateHeader.textContent = `📅 ${date}`;
+                    dateGroup.appendChild(dateHeader);
                     
                     for (const user in groupedData[date]) {
-                        dateGroup.innerHTML += `<strong>${user}</strong>`;
+                        const userSection = document.createElement("div");
+                        userSection.className = `user-section ${user.toLowerCase()}`;
+                        
+                        const userName = document.createElement("div");
+                        userName.className = "user-name";
+                        userName.innerHTML = `<span class="user-icon"></span> ${user}`;
+                        userSection.appendChild(userName);
                         
                         for (const exercise in groupedData[date][user]) {
-                            dateGroup.innerHTML += `<em>${exercise}</em>`;
+                            const exerciseSection = document.createElement("div");
+                            exerciseSection.className = "exercise-section";
+                            
+                            const exerciseName = document.createElement("div");
+                            exerciseName.className = "exercise-name";
+                            exerciseName.innerHTML = `<span class="exercise-icon"></span> ${exercise}`;
+                            exerciseSection.appendChild(exerciseName);
                             
                             groupedData[date][user][exercise].forEach(set => {
                                 const entry = document.createElement("div");
@@ -674,13 +1058,17 @@
                                 entry.dataset.id = set.id;
                                 entry.innerHTML = `
                                     <div class="log-detail">
-                                        <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
+                                        <span class="set-info">Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
                                         <button class="edit-btn">✏️</button>
                                     </div>
                                 `;
-                                dateGroup.appendChild(entry);
+                                exerciseSection.appendChild(entry);
                             });
+                            
+                            userSection.appendChild(exerciseSection);
                         }
+                        
+                        dateGroup.appendChild(userSection);
                     }
                     container.appendChild(dateGroup);
                 }
@@ -694,14 +1082,13 @@
                 workoutLog[setIndex].reps = reps;
                 workoutLog[setIndex].rpe = rpe;
                 
-                localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
-                
                 if (document.getElementById('home').classList.contains('active')) {
                     renderTodayLog();
                 } else {
                     renderHistory();
                 }
                 
+                updateMaxWeightDisplay(); // Update max weights after editing a set
                 logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
             }
 
@@ -736,11 +1123,12 @@
                 
                 const currentContent = debugEl.textContent;
                 const lines = currentContent.split('\n').filter(l => l.trim());
-                if (lines.length >= 5) {
+                if (lines.length >= 3) { // Reduced for mobile
                     lines.shift();
                 }
                 
                 debugEl.textContent = lines.join('\n') + '\n' + newMessage;
+                debugEl.scrollTop = debugEl.scrollHeight;
             }
 
             function startListening() {
@@ -790,7 +1178,6 @@
                         }
                         const key = `${currentUser}_${currentExercise}`;
                         setCounts[key] = 1;
-                        localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
                         logDebug(`🛑 Reset set count for ${currentUser} - ${currentExercise}`);
                         return;
                     }
@@ -838,6 +1225,31 @@
                 }
             }
 
+            // Add this function to show max weight for each user
+            function showMaxWeight() {
+                if (!currentExercise) {
+                    logDebug("⚠️ Please select an exercise first");
+                    return;
+                }
+
+                const userMaxWeights = {};
+                
+                workoutLog.forEach(log => {
+                    if (log.exercise === currentExercise) {
+                        if (!userMaxWeights[log.user] || log.weight > userMaxWeights[log.user]) {
+                            userMaxWeights[log.user] = log.weight;
+                        }
+                    }
+                });
+
+                let maxWeightMessage = `🏆 Max weights for ${currentExercise}:\n`;
+                for (const user in userMaxWeights) {
+                    maxWeightMessage += `${user}: ${userMaxWeights[user]}kg\n`;
+                }
+
+                logDebug(maxWeightMessage);
+            }
+
             // Event listeners
             addWorkoutBtn.addEventListener('click', addWorkout);
             btnSelim.addEventListener('click', () => selectUser('Selim'));
@@ -848,39 +1260,33 @@
             navHistory.addEventListener('click', () => switchTab('history'));
             workoutSelect.addEventListener('change', (e) => handleExerciseChange(e.target.value));
 
+            // Add touch event handlers for better mobile experience
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.classList.contains('btn') || e.target.classList.contains('user-btn')) {
+                    e.target.style.transform = 'scale(0.98)';
+                }
+            });
+
+            document.addEventListener('touchend', function(e) {
+                if (e.target.classList.contains('btn') || e.target.classList.contains('user-btn')) {
+                    setTimeout(() => {
+                        e.target.style.transform = '';
+                    }, 150);
+                }
+            });
+
+            // Prevent zoom on double tap for better UX
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function (event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
             logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
         });
-        
-// Add this function to show max weight for each user
-function showMaxWeight() {
-    if (!currentExercise) {
-        logDebug("⚠️ Please select an exercise first");
-        return;
-    }
-
-    const userMaxWeights = {};
-    
-    workoutLog.forEach(log => {
-        if (log.exercise === currentExercise) {
-            if (!userMaxWeights[log.user] || log.weight > userMaxWeights[log.user]) {
-                userMaxWeights[log.user] = log.weight;
-            }
-        }
-    });
-
-    let maxWeightMessage = `🏆 Max weights for ${currentExercise}:\n`;
-    for (const user in userMaxWeights) {
-        maxWeightMessage += `${user}: ${userMaxWeights[user]}kg\n`;
-    }
-
-    logDebug(maxWeightMessage);
-}
-
-// Add this button to your HTML (place it near the workout select dropdown)
-// <button class="btn" id="showMaxBtn">Show Max Weight</button>
-
-// Add this event listener in your DOMContentLoaded
-document.getElementById('showMaxBtn').addEventListener('click', showMaxWeight); 
     </script>
 </body>
 </html>
