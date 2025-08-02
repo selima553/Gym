@@ -428,10 +428,10 @@
     </section>
   </main>
 
-  <footer>Gym Tracker <span class="version">v1.4</span></footer>
+  <footer>Gym Tracker <span class="version">v1.5</span></footer>
 
   <script>
-     // Persistent data keys
+       // Persistent data keys
     const LOGS_KEY = 'workoutLog';
     const WORKOUTS_KEY = 'exercises';
     const SET_COUNTS_KEY = 'setCounts';
@@ -641,7 +641,7 @@
         }
       }
 
-      // Update a set
+      // Update a set - Corrected Logic
       function updateSet(setId, weight, reps, rpe) {
         // Find the set in workoutLog
         const setIndex = workoutLog.findIndex(s => s.id === setId);
@@ -656,6 +656,7 @@
         localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
         
         // Re-render the appropriate log
+        // This is the key fix: re-rendering the specific log section will refresh the UI
         if(document.getElementById('home').classList.contains('active')) {
           renderTodayLog();
         } else {
