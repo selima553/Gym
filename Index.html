@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Gym Tracker</title>
+  <title>Gym Tracker - Fixed</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
@@ -361,6 +361,17 @@
       margin-left: 0.25rem;
     }
 
+    .fixed-notice {
+      background: #4f46e5;
+      color: white;
+      padding: 0.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+      position: sticky;
+      top: 6.5rem;
+      z-index: 999;
+    }
+
     @media (max-width: 480px) {
       main {
         padding: 1rem 1rem 3rem;
@@ -373,11 +384,15 @@
         font-size: 1rem;
         padding: 0.75rem 0;
       }
+      .fixed-notice {
+        top: 5.5rem;
+      }
     }
   </style>
 </head>
 <body>
   <header>🏋️ Gym Tracker</header>
+  <div class="fixed-notice">✅ Edit Set Issue Fixed!</div>
   <nav>
     <button id="navHome" class="active">🏠 Home</button>
     <button id="navHistory">📜 History</button>
@@ -428,7 +443,7 @@
     </section>
   </main>
 
-  <footer>Gym Tracker <span class="version">v1.2</span></footer>
+  <footer>Gym Tracker <span class="version">v1.3</span> - Edit Set Issue Fixed</footer>
 
   <script>
     // Persistent data keys
@@ -443,7 +458,10 @@
     let setCounts = JSON.parse(localStorage.getItem(SET_COUNTS_KEY)) || {};
     let currentExercise = '';
     let currentUser = '';
+    
+    // Instead of a single editingSetId, we'll manage editing state per set
     let editingSetId = null;
+    let currentTab = 'home'; // Track current tab
     
     document.addEventListener('DOMContentLoaded', () => {
       // Get DOM elements
@@ -531,7 +549,7 @@
         const setNum = setCounts[key] || 1;
         
         // Generate unique ID for the set
-        const setId = Date.now();
+        const setId = `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
         
         const entry = { 
           id: setId,
@@ -594,16 +612,17 @@
                     <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE" id="edit-rpe-${set.id}">
                   </div>
                   <div class="form-actions">
-                    <button class="save-btn">💾 Save</button>
+                    <button class="save-btn" data-id="${set.id}">💾 Save</button>
                     <button class="cancel-btn">✕ Cancel</button>
                   </div>
                 `;
                 
-                form.querySelector('.save-btn').addEventListener('click', () => {
-                  const newWeight = form.querySelector(`#edit-weight-${set.id}`).value;
-                  const newReps = form.querySelector(`#edit-reps-${set.id}`).value;
-                  const newRpe = form.querySelector(`#edit-rpe-${set.id}`).value;
-                  updateSet(set.id, newWeight, newReps, newRpe);
+                form.querySelector('.save-btn').addEventListener('click', (e) => {
+                  const setId = e.target.dataset.id;
+                  const newWeight = form.querySelector(`#edit-weight-${setId}`).value;
+                  const newReps = form.querySelector(`#edit-reps-${setId}`).value;
+                  const newRpe = form.querySelector(`#edit-rpe-${setId}`).value;
+                  updateSet(setId, newWeight, newReps, newRpe);
                 });
                 
                 form.querySelector('.cancel-btn').addEventListener('click', () => {
@@ -624,7 +643,7 @@
                 `;
                 
                 entry.querySelector('.edit-btn').addEventListener('click', (e) => {
-                  editingSetId = set.id;
+                  editingSetId = e.target.dataset.id;
                   renderTodayLog();
                 });
                 
@@ -658,8 +677,13 @@
         // Reset editing state
         editingSetId = null;
         
-        // Re-render
-        renderTodayLog();
+        // Re-render the current view
+        if (currentTab === 'home') {
+          renderTodayLog();
+        } else {
+          renderHistory();
+        }
+        
         logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
       }
 
@@ -730,16 +754,17 @@
                       <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE" id="edit-rpe-${set.id}">
                     </div>
                     <div class="form-actions">
-                      <button class="save-btn">💾 Save</button>
+                      <button class="save-btn" data-id="${set.id}">💾 Save</button>
                       <button class="cancel-btn">✕ Cancel</button>
                     </div>
                   `;
                   
-                  form.querySelector('.save-btn').addEventListener('click', () => {
-                    const newWeight = form.querySelector(`#edit-weight-${set.id}`).value;
-                    const newReps = form.querySelector(`#edit-reps-${set.id}`).value;
-                    const newRpe = form.querySelector(`#edit-rpe-${set.id}`).value;
-                    updateSet(set.id, newWeight, newReps, newRpe);
+                  form.querySelector('.save-btn').addEventListener('click', (e) => {
+                    const setId = e.target.dataset.id;
+                    const newWeight = form.querySelector(`#edit-weight-${setId}`).value;
+                    const newReps = form.querySelector(`#edit-reps-${setId}`).value;
+                    const newRpe = form.querySelector(`#edit-rpe-${setId}`).value;
+                    updateSet(setId, newWeight, newReps, newRpe);
                   });
                   
                   form.querySelector('.cancel-btn').addEventListener('click', () => {
@@ -760,7 +785,7 @@
                   `;
                   
                   entry.querySelector('.edit-btn').addEventListener('click', (e) => {
-                    editingSetId = set.id;
+                    editingSetId = e.target.dataset.id;
                     renderHistory();
                   });
                   
@@ -863,6 +888,7 @@
           history.classList.remove('active');
           navHome.classList.add('active');
           navHistory.classList.remove('active');
+          currentTab = 'home';
           editingSetId = null; // Reset editing when switching tabs
           renderTodayLog();
         } else {
@@ -870,6 +896,7 @@
           history.classList.add('active');
           navHome.classList.remove('active');
           navHistory.classList.add('active');
+          currentTab = 'history';
           editingSetId = null; // Reset editing when switching tabs
           setupFilters();
           renderHistory();
