@@ -621,23 +621,19 @@
             return wordsToNumbers[word] !== undefined ? wordsToNumbers[word] : NaN;
           }).filter(n => !isNaN(n));
 
-          // Handle "stop" command: clear today's sets for current workout/user
+          // Handle "stop" command: reset set count for current workout/user
           if (transcript.includes('stop')) {
             if (!currentUser || !currentExercise) {
               logDebug("⚠️ Select user and workout before using 'stop'");
               return;
             }
+            
             const key = `${currentUser}_${currentExercise}`;
-            workoutLog = workoutLog.filter(log => 
-              !(log.user === currentUser && 
-                log.exercise === currentExercise && 
-                log.date === today)
-            );
-            delete setCounts[key];
-            localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
+            // Reset set count to 1 without deleting logs
+            setCounts[key] = 1;
             localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
-            renderTodayLog();
-            logDebug("🛑 Cleared sets for this workout and user.");
+            
+            logDebug(`🛑 Reset set count for ${currentUser} - ${currentExercise}`);
             return;
           }
 
