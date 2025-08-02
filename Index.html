@@ -754,15 +754,22 @@
     </div>
 
     <script>
-        // Persistent data keys
-        const LOGS_KEY = 'workoutLog';
-        const WORKOUTS_KEY = 'exercises';
-        const SET_COUNTS_KEY = 'setCounts';
-        const THEME_KEY = 'themePreference';
+        // Data storage with localStorage
+        let workoutLog = JSON.parse(localStorage.getItem('workoutLog')) || [];
+        let exercises = JSON.parse(localStorage.getItem('exercises')) || ["Bench Press", "Squat", "Deadlift", "Leg Press"];
+        let setCounts = JSON.parse(localStorage.getItem('setCounts')) || {};
+        let currentExercise = '';
+        let currentUser = '';
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
 
         const today = new Date().toISOString().split("T")[0];
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize dark mode if set
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+
             // Get DOM elements
             const workoutSelect = document.getElementById('workoutSelect');
             const newWorkoutInput = document.getElementById('newWorkoutInput');
@@ -781,9 +788,7 @@
             const themeToggle = document.getElementById('themeToggle');
 
             // Initialize theme
-            const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
-            document.body.classList.toggle('dark-mode', savedTheme === 'dark');
-            themeToggle.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+            themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
 
             // Initialize app
             updateWorkoutDropdowns();
@@ -795,6 +800,7 @@
                 document.body.classList.toggle('dark-mode');
                 isDarkMode = document.body.classList.contains('dark-mode');
                 themeToggle.textContent = isDarkMode ? '☀️' : '🌙';
+                localStorage.setItem('darkMode', isDarkMode);
             });
 
             // Event delegation for edit buttons
@@ -866,6 +872,7 @@
                 if (exercises.includes(newWorkout)) return alert('Workout already exists.');
 
                 exercises.push(newWorkout);
+                localStorage.setItem('exercises', JSON.stringify(exercises));
                 updateWorkoutDropdowns();
                 newWorkoutInput.value = '';
                 workoutSelect.value = newWorkout;
@@ -968,6 +975,10 @@
                 
                 workoutLog.push(entry);
                 setCounts[key] = setNum + 1;
+                
+                // Save to localStorage
+                localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
+                localStorage.setItem('setCounts', JSON.stringify(setCounts));
                 
                 clearSetInputs();
                 renderTodayLog();
@@ -1082,6 +1093,9 @@
                 workoutLog[setIndex].reps = reps;
                 workoutLog[setIndex].rpe = rpe;
                 
+                // Save to localStorage
+                localStorage.setItem('workoutLog', JSON.stringify(workoutLog));
+                
                 if (document.getElementById('home').classList.contains('active')) {
                     renderTodayLog();
                 } else {
@@ -1178,6 +1192,7 @@
                         }
                         const key = `${currentUser}_${currentExercise}`;
                         setCounts[key] = 1;
+                        localStorage.setItem('setCounts', JSON.stringify(setCounts));
                         logDebug(`🛑 Reset set count for ${currentUser} - ${currentExercise}`);
                         return;
                     }
