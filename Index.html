@@ -427,7 +427,7 @@
     </section>
   </main>
 
-  <footer>Gym Tracker <span class="version">v1.2</span></footer>
+  <footer>Gym Tracker <span class="version">v1.6</span></footer>
 
   <script>
    // Persistent data keys
@@ -450,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const addWorkoutBtn = document.getElementById('addWorkoutBtn');
   const debugEl = document.getElementById('debug');
   const todayLogEl = document.getElementById('today-log');
+  const historyLogEl = document.getElementById('history-log');
   const dateFilter = document.getElementById('dateFilter');
   const workoutFilter = document.getElementById('workoutFilter');
   const btnSelim = document.getElementById('btnSelim');
@@ -458,84 +459,76 @@ document.addEventListener('DOMContentLoaded', () => {
   const navHistory = document.getElementById('navHistory');
   const submitSetBtn = document.getElementById('submitSet');
   const micBtn = document.getElementById('micBtn');
-  
+
   // Initialize app
   updateWorkoutDropdowns();
   renderTodayLog();
   setupFilters();
-  
-  // Event delegation for edit buttons
-  document.addEventListener('click', function(e) {
-    // Handle edit button clicks
+
+  // ======================
+  // **EVENT DELEGATION FOR EDIT BUTTONS (FIXED)**
+  // ======================
+  document.addEventListener('click', (e) => {
+    // **Handle Edit Button Click**
     if (e.target.classList.contains('edit-btn')) {
       const logEntry = e.target.closest('.log-entry');
       if (!logEntry) return;
-      
-      const setId = parseInt(logEntry.dataset.id);
-      const set = workoutLog.find(s => s.id === setId);
-      if (!set) return;
-      
-      // Remove any existing edit forms first
+
+      // Close any other open edit forms first
       document.querySelectorAll('.edit-form').forEach(form => form.remove());
-      
-      // Create and insert edit form
+
+      // Get the set ID and data
+      const setId = parseInt(logEntry.dataset.id);
+      const setData = workoutLog.find(s => s.id === setId);
+      if (!setData) return;
+
+      // Create and insert the edit form
       const editForm = document.createElement('div');
       editForm.className = 'edit-form';
       editForm.innerHTML = `
         <div class="form-row">
-          <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
-          <input type="number" value="${set.reps}" min="1" placeholder="Reps">
-          <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
+          <input type="number" value="${setData.weight}" min="0" step="0.5" placeholder="Weight">
+          <input type="number" value="${setData.reps}" min="1" placeholder="Reps">
+          <input type="number" value="${setData.rpe}" min="1" max="10" placeholder="RPE">
         </div>
         <div class="form-actions">
           <button class="save-btn">💾 Save</button>
           <button class="cancel-btn">✕ Cancel</button>
         </div>
       `;
-      
+
       logEntry.appendChild(editForm);
-      
-      // Focus on first input
-      editForm.querySelector('input').focus();
     }
-    
-    // Handle save button clicks
+
+    // **Handle Save Button Click**
     if (e.target.classList.contains('save-btn')) {
       const editForm = e.target.closest('.edit-form');
       if (!editForm) return;
-      
+
       const logEntry = editForm.closest('.log-entry');
       const setId = parseInt(logEntry.dataset.id);
-      
+
       const inputs = editForm.querySelectorAll('input');
       const newWeight = inputs[0].value;
       const newReps = inputs[1].value;
       const newRpe = inputs[2].value;
-      
+
       updateSet(setId, newWeight, newReps, newRpe);
     }
-    
-    // Handle cancel button clicks
+
+    // **Handle Cancel Button Click**
     if (e.target.classList.contains('cancel-btn')) {
       const editForm = e.target.closest('.edit-form');
       if (editForm) editForm.remove();
     }
   });
 
-  // Update workout dropdowns with "-- Select Exercise --" option
+  // ======================
+  // **CORE FUNCTIONS**
+  // ======================
   function updateWorkoutDropdowns() {
-    const selects = [workoutSelect, workoutFilter];
-    selects.forEach(select => {
-      // Clear existing options
-      select.innerHTML = '';
-      
-      // Add default option
-      const defaultOption = document.createElement('option');
-      defaultOption.value = "";
-      defaultOption.textContent = "-- Select Exercise --";
-      select.appendChild(defaultOption);
-      
-      // Add workout options
+    [workoutSelect, workoutFilter].forEach(select => {
+      select.innerHTML = '<option value="">-- Select Exercise --</option>';
       exercises.forEach(workout => {
         const option = document.createElement('option');
         option.value = workout;
@@ -544,8 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   }
-  
-  // Add workout function
+
   function addWorkout() {
     const newWorkout = newWorkoutInput.value.trim();
     if (!newWorkout) return alert('Please enter a workout name.');
@@ -567,13 +559,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function selectUser(user) {
     currentUser = user;
     logDebug(`✅ Selected user: ${user}`);
-    
-    // Update UI for selected user
     btnSelim.style.backgroundColor = user === 'Selim' ? '#4338ca' : '#6366f1';
     btnFriend.style.backgroundColor = user === 'Friend' ? '#4338ca' : '#6366f1';
   }
 
-  // Submit set
   function submitSet() {
     const weight = document.getElementById('weight').value;
     const reps = document.getElementById('reps').value;
@@ -585,8 +574,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const key = `${currentUser}_${currentExercise}`;
     const setNum = setCounts[key] || 1;
-    
-    // Generate unique ID for the set
     const setId = Date.now();
     
     const entry = { 
@@ -617,133 +604,62 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rpe').value = '';
   }
 
-  // Render today's log
   function renderTodayLog() {
-    const container = document.getElementById('today-log');
-    container.innerHTML = '';
+    todayLogEl.innerHTML = '';
+    const todayWorkouts = workoutLog.filter(log => log.date === today);
     
-    const grouped = {};
-    for (let e of workoutLog) {
-      if (e.date !== today) continue;
-      if (!grouped[e.user]) grouped[e.user] = {};
-      if (!grouped[e.user][e.exercise]) grouped[e.user][e.exercise] = [];
-      grouped[e.user][e.exercise].push(e);
-    }
-    
-    for (let user in grouped) {
-      const group = document.createElement("div");
-      group.className = "log-group";
-      group.innerHTML = `<h4>${user}</h4>`;
-      
-      for (let ex in grouped[user]) {
-        group.innerHTML += `<strong>${ex}</strong>`;
-        
-        grouped[user][ex].forEach(set => {
-          const entry = document.createElement("div");
-          entry.className = "log-entry";
-          entry.dataset.id = set.id;
-          entry.innerHTML = `
-            <div class="log-detail">
-              <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
-              <button class="edit-btn">✏️</button>
-            </div>
-          `;
-          
-          group.appendChild(entry);
-        });
-      }
-      
-      container.appendChild(group);
-    }
-    
-    if (container.innerHTML === '') {
-      container.textContent = 'No logs for today yet.';
-    }
-  }
-
-  // Update a set
-  function updateSet(setId, weight, reps, rpe) {
-    const setIndex = workoutLog.findIndex(s => s.id === setId);
-    
-    if (setIndex === -1) {
-      logDebug(`⚠️ Set not found: ${setId}`);
+    if (todayWorkouts.length === 0) {
+      todayLogEl.textContent = 'No logs for today yet.';
       return;
     }
-    
-    // Update the set
-    workoutLog[setIndex].weight = weight;
-    workoutLog[setIndex].reps = reps;
-    workoutLog[setIndex].rpe = rpe;
-    
-    // Save to localStorage
-    localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
-    
-    // Re-render the appropriate log
-    if(document.getElementById('home').classList.contains('active')) {
-      renderTodayLog();
-    } else {
-      renderHistory();
-    }
-    
-    logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
+
+    const grouped = groupWorkouts(todayWorkouts);
+    renderWorkoutLog(todayLogEl, grouped);
   }
 
-  // Setup filters in history tab
-  function setupFilters() {
-    // Populate date filter
-    const uniqueDates = [...new Set(workoutLog.map(log => log.date))].sort().reverse();
-    dateFilter.innerHTML = '<option value="">All Dates</option>';
-    uniqueDates.forEach(date => {
-      const option = document.createElement('option');
-      option.value = date;
-      option.textContent = date;
-      dateFilter.appendChild(option);
-    });
-    
-    // Populate workout filter
-    const uniqueWorkouts = [...new Set(workoutLog.map(log => log.exercise))].sort();
-    workoutFilter.innerHTML = '<option value="">All Workouts</option>';
-    uniqueWorkouts.forEach(workout => {
-      const option = document.createElement('option');
-      option.value = workout;
-      option.textContent = workout;
-      workoutFilter.appendChild(option);
-    });
-    
-    // Set up event listeners
-    dateFilter.addEventListener('change', renderHistory);
-    workoutFilter.addEventListener('change', renderHistory);
-  }
-
-  // Render history log
   function renderHistory() {
-    const filterEx = workoutFilter.value;
-    const filterDate = dateFilter.value;
-    const container = document.getElementById('history-log');
-    container.innerHTML = '';
-    
-    const grouped = {};
-    for (let e of workoutLog) {
-      if (filterEx && e.exercise !== filterEx) continue;
-      if (filterDate && e.date !== filterDate) continue;
-      if (!grouped[e.date]) grouped[e.date] = {};
-      if (!grouped[e.date][e.user]) grouped[e.date][e.user] = {};
-      if (!grouped[e.date][e.user][e.exercise]) grouped[e.date][e.user][e.exercise] = [];
-      grouped[e.date][e.user][e.exercise].push(e);
+    historyLogEl.innerHTML = '';
+    const filteredWorkouts = workoutLog.filter(log => {
+      const matchesExercise = !workoutFilter.value || log.exercise === workoutFilter.value;
+      const matchesDate = !dateFilter.value || log.date === dateFilter.value;
+      return matchesExercise && matchesDate;
+    });
+
+    if (filteredWorkouts.length === 0) {
+      historyLogEl.textContent = 'No history entries found for selected filters.';
+      return;
     }
-    
-    for (let date in grouped) {
+
+    const grouped = groupWorkouts(filteredWorkouts);
+    renderWorkoutLog(historyLogEl, grouped);
+  }
+
+  function groupWorkouts(workouts) {
+    const grouped = {};
+    workouts.forEach(workout => {
+      if (!grouped[workout.date]) grouped[workout.date] = {};
+      if (!grouped[workout.date][workout.user]) grouped[workout.date][workout.user] = {};
+      if (!grouped[workout.date][workout.user][workout.exercise]) {
+        grouped[workout.date][workout.user][workout.exercise] = [];
+      }
+      grouped[workout.date][workout.user][workout.exercise].push(workout);
+    });
+    return grouped;
+  }
+
+  function renderWorkoutLog(container, groupedData) {
+    for (const date in groupedData) {
       const dateGroup = document.createElement("div");
       dateGroup.className = "log-group";
       dateGroup.innerHTML = `<h4>${date}</h4>`;
       
-      for (let user in grouped[date]) {
+      for (const user in groupedData[date]) {
         dateGroup.innerHTML += `<strong>${user}</strong>`;
         
-        for (let ex in grouped[date][user]) {
-          dateGroup.innerHTML += `<em>${ex}</em>`;
+        for (const exercise in groupedData[date][user]) {
+          dateGroup.innerHTML += `<em>${exercise}</em>`;
           
-          grouped[date][user][ex].forEach(set => {
+          groupedData[date][user][exercise].forEach(set => {
             const entry = document.createElement("div");
             entry.className = "log-entry";
             entry.dataset.id = set.id;
@@ -753,26 +669,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="edit-btn">✏️</button>
               </div>
             `;
-            
             dateGroup.appendChild(entry);
           });
         }
       }
-      
       container.appendChild(dateGroup);
-    }
-    
-    if (container.innerHTML === '') {
-      container.textContent = 'No history entries found for selected filters.';
     }
   }
 
-  // Debug helper
+  function updateSet(setId, weight, reps, rpe) {
+    const setIndex = workoutLog.findIndex(s => s.id === setId);
+    if (setIndex === -1) return;
+
+    workoutLog[setIndex].weight = weight;
+    workoutLog[setIndex].reps = reps;
+    workoutLog[setIndex].rpe = rpe;
+    
+    localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
+    
+    if (document.getElementById('home').classList.contains('active')) {
+      renderTodayLog();
+    } else {
+      renderHistory();
+    }
+    
+    logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
+  }
+
+  function setupFilters() {
+    const uniqueDates = [...new Set(workoutLog.map(log => log.date))].sort().reverse();
+    dateFilter.innerHTML = '<option value="">All Dates</option>';
+    uniqueDates.forEach(date => {
+      const option = document.createElement('option');
+      option.value = date;
+      option.textContent = date;
+      dateFilter.appendChild(option);
+    });
+
+    const uniqueWorkouts = [...new Set(workoutLog.map(log => log.exercise))].sort();
+    workoutFilter.innerHTML = '<option value="">All Workouts</option>';
+    uniqueWorkouts.forEach(workout => {
+      const option = document.createElement('option');
+      option.value = workout;
+      option.textContent = workout;
+      workoutFilter.appendChild(option);
+    });
+
+    dateFilter.addEventListener('change', renderHistory);
+    workoutFilter.addEventListener('change', renderHistory);
+  }
+
   function logDebug(msg) {
     debugEl.textContent = msg;
   }
 
-  // Voice input with improved UX
   function startListening() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) return alert("🚫 Voice recognition not supported in this browser.");
@@ -781,7 +731,6 @@ document.addEventListener('DOMContentLoaded', () => {
     recognition.lang = 'en-US';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.continuous = false;
     recognition.start();
 
     logDebug("🎤 Listening...");
@@ -790,39 +739,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const transcript = event.results[0][0].transcript.toLowerCase();
       logDebug(`🗣 Heard: "${transcript}"`);
 
-      // Remove keywords
-      let text = transcript.replace(/kilograms?|kg/g, '')
-                          .replace(/difficulty|rpe/g, '')
-                          .replace(/stop/g, '')
-                          .trim();
-
-      // Map common number words + fuzzy for "for", "to"
-      const wordsToNumbers = {
-        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
-        'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
-        'ten': 10, 'eleven': 11, 'twelve': 12, 'for': 4, 'to': 2
-      };
-
-      const parts = text.split(/\s+/).map(word => {
-        if (!isNaN(word)) return +word;
-        return wordsToNumbers[word] !== undefined ? wordsToNumbers[word] : NaN;
-      }).filter(n => !isNaN(n));
-
-      // Handle "stop" command: reset set count for current workout/user
-      if (transcript.includes('stop')) {
-        if (!currentUser || !currentExercise) {
-          logDebug("⚠️ Select user and workout before using 'stop'");
-          return;
-        }
-        
-        const key = `${currentUser}_${currentExercise}`;
-        // Reset set count to 1 without deleting logs
-        setCounts[key] = 1;
-        localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
-        
-        logDebug(`🛑 Reset set count for ${currentUser} - ${currentExercise}`);
-        return;
-      }
+      const parts = transcript.split(/\s+/)
+        .map(word => isNaN(word) ? (word === 'to' ? 2 : word === 'for' ? 4 : NaN) : +word)
+        .filter(n => !isNaN(n));
 
       if (parts.length >= 3) {
         document.getElementById('weight').value = parts[0];
@@ -834,15 +753,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    recognition.onerror = (e) => {
-      logDebug("⚠️ Voice error: " + e.error);
-    };
-    recognition.onend = () => {
-      logDebug("🎤 Voice recognition ended.");
-    };
+    recognition.onerror = (e) => logDebug("⚠️ Voice error: " + e.error);
+    recognition.onend = () => logDebug("🎤 Voice recognition ended.");
   }
 
-  // Switch tabs with button highlight
   function switchTab(tab) {
     const home = document.getElementById('home');
     const history = document.getElementById('history');
@@ -858,12 +772,11 @@ document.addEventListener('DOMContentLoaded', () => {
       history.classList.add('active');
       navHome.classList.remove('active');
       navHistory.classList.add('active');
-      setupFilters();
       renderHistory();
     }
   }
 
-  // Set up event listeners
+  // Event listeners
   addWorkoutBtn.addEventListener('click', addWorkout);
   btnSelim.addEventListener('click', () => selectUser('Selim'));
   btnFriend.addEventListener('click', () => selectUser('Friend'));
@@ -872,8 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
   navHome.addEventListener('click', () => switchTab('home'));
   navHistory.addEventListener('click', () => switchTab('history'));
   workoutSelect.addEventListener('change', (e) => handleExerciseChange(e.target.value));
-  
-  // Initial debug info
+
   logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
 });
   </script>
