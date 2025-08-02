@@ -458,30 +458,28 @@
 
       // Render today's log
       function renderToday() {
-        todayLogEl.innerHTML = '';
         const today = getToday();
+        todayLogEl.innerHTML = '';
         
-        // Group logs by user and then by workout
-        const groupedLogs = {};
+        const todayLog = logs.filter(log => log.date === today);
+        if (todayLog.length === 0) {
+          todayLogEl.textContent = 'No logs for today yet.';
+          return;
+        }
         
-        logs.forEach(log => {
-          if (log.date !== today) return;
-          
-          if (!groupedLogs[log.user]) groupedLogs[log.user] = {};
-          if (!groupedLogs[log.user][log.workout]) groupedLogs[log.user][log.workout] = [];
-          
-          groupedLogs[log.user][log.workout].push(log);
+        // Group by user and workout
+        const grouped = {};
+        todayLog.forEach(log => {
+          if (!grouped[log.user]) grouped[log.user] = {};
+          if (!grouped[log.user][log.workout]) grouped[log.user][log.workout] = [];
+          grouped[log.user][log.workout].push(log);
         });
         
-        // Check if we have any logs for today
-        let hasLogs = false;
-        
         ['Selim', 'Friend'].forEach(user => {
-          if (!groupedLogs[user]) return;
+          if (!grouped[user]) return;
           
-          Object.keys(groupedLogs[user]).forEach(workout => {
-            hasLogs = true;
-            const logsForWorkout = groupedLogs[user][workout];
+          Object.keys(grouped[user]).forEach(workout => {
+            const logsForWorkout = grouped[user][workout];
             const maxWeight = Math.max(...logsForWorkout.map(log => log.weight));
             
             const container = document.createElement('div');
@@ -502,19 +500,12 @@
             todayLogEl.appendChild(container);
           });
         });
-        
-        if (!hasLogs) {
-          todayLogEl.textContent = 'No logs for today yet.';
-        }
       }
 
       // Setup filters in history tab
       function setupFilters() {
-        // Get unique dates and workouts
-        const uniqueDates = [...new Set(logs.map(log => log.date))].sort().reverse();
-        const uniqueWorkouts = [...new Set(logs.map(log => log.workout))].sort();
-        
         // Populate date filter
+        const uniqueDates = [...new Set(logs.map(log => log.date))].sort().reverse();
         dateFilter.innerHTML = '<option value="">All Dates</option>';
         uniqueDates.forEach(date => {
           const option = document.createElement('option');
@@ -524,6 +515,7 @@
         });
         
         // Populate workout filter
+        const uniqueWorkouts = [...new Set(logs.map(log => log.workout))].sort();
         workoutFilter.innerHTML = '<option value="">All Workouts</option>';
         uniqueWorkouts.forEach(workout => {
           const option = document.createElement('option');
