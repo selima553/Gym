@@ -458,49 +458,30 @@
 
       // Render today's log
       function renderToday() {
-        const today = getToday();
-        todayLogEl.innerHTML = '';
-        
-        const todayLog = logs.filter(log => log.date === today);
-        if (todayLog.length === 0) {
-          todayLogEl.textContent = 'No logs for today yet.';
-          return;
-        }
-        
-        // Group by user and workout
-        const grouped = {};
-        todayLog.forEach(log => {
-          if (!grouped[log.user]) grouped[log.user] = {};
-          if (!grouped[log.user][log.workout]) grouped[log.user][log.workout] = [];
-          grouped[log.user][log.workout].push(log);
-        });
-        
-        ['Selim', 'Friend'].forEach(user => {
-          if (!grouped[user]) return;
-          
-          Object.keys(grouped[user]).forEach(workout => {
-            const logsForWorkout = grouped[user][workout];
-            const maxWeight = Math.max(...logsForWorkout.map(log => log.weight));
-            
-            const container = document.createElement('div');
-            container.className = 'log-entry';
-            
-            const header = document.createElement('div');
-            header.className = 'log-header';
-            header.textContent = `${user} -- ${workout} (Max: ${maxWeight}kg)`;
-            container.appendChild(header);
-            
-            logsForWorkout.forEach(log => {
-              const line = document.createElement('div');
-              line.className = 'log-detail';
-              line.textContent = `${log.reps} reps × ${log.weight}kg (RPE ${log.rpe})`;
-              container.appendChild(line);
-            });
-            
-            todayLogEl.appendChild(container);
+      const container = document.getElementById('today-log');
+      container.innerHTML = '';
+
+      ['Selim', 'Friend'].forEach(user => {
+        const userLogs = logs.filter(log => log.user === user && log.date === todayKey);
+        const workouts = [...new Set(userLogs.map(log => log.workout))];
+
+        workouts.forEach(workout => {
+          const logsForWorkout = userLogs.filter(log => log.workout === workout);
+          const maxWeight = Math.max(...logsForWorkout.map(log => log.weight));
+          const header = document.createElement('div');
+          header.className = 'log-entry';
+          header.innerHTML = `<div class="log-header">${user} - ${workout} (Max: ${maxWeight}kg)</div>`;
+
+          logsForWorkout.forEach(log => {
+            const line = document.createElement('div');
+            line.textContent = `${log.reps} reps × ${log.weight}kg (RPE ${log.rpe})`;
+            header.appendChild(line);
           });
+
+          container.appendChild(header);
         });
-      }
+      });
+    }
 
       // Setup filters in history tab
       function setupFilters() {
