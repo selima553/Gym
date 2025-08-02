@@ -1,793 +1,814 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-  <title>Gym Tracker</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #f0f4ff, #e2ebff);
-      color: #222;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header {
-      background: #4f46e5;
-      color: white;
-      padding: 1.25rem;
-      text-align: center;
-      font-size: 1.75rem;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      box-shadow: 0 4px 8px rgb(79 70 229 / 0.3);
-      user-select: none;
-      position: sticky;
-      top: 0;
-      z-index: 1001;
-    }
-
-    nav {
-      display: flex;
-      justify-content: space-around;
-      background: white;
-      box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
-      padding: 0.5rem 0;
-      position: sticky;
-      top: 3.5rem;
-      z-index: 1000;
-    }
-    nav button {
-      all: unset;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 1.1rem;
-      padding: 0.6rem 1.25rem;
-      border-radius: 9999px;
-      transition: background-color 0.25s ease;
-      color: #4f46e5;
-      user-select: none;
-    }
-    nav button:hover,
-    nav button.active {
-      background-color: #4f46e5;
-      color: white;
-      box-shadow: 0 2px 6px rgb(79 70 229 / 0.5);
-    }
-
-    main {
-      flex-grow: 1;
-      padding: 1rem 1.25rem 3rem;
-      max-width: 480px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    section {
-      display: none;
-    }
-    section.active {
-      display: block;
-    }
-
-    label {
-      font-weight: 600;
-      font-size: 0.9rem;
-      display: block;
-      margin-top: 1rem;
-      margin-bottom: 0.4rem;
-      color: #444;
-    }
-
-    select, input[type="number"], input[type="text"] {
-      width: 100%;
-      padding: 0.7rem 1rem;
-      font-size: 1rem;
-      border-radius: 12px;
-      border: 1.8px solid #cbd5e1;
-      outline-offset: 2px;
-      transition: border-color 0.3s ease;
-      box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.07);
-    }
-    select:focus, input[type="number"]:focus, input[type="text"]:focus {
-      border-color: #4f46e5;
-      box-shadow: 0 0 6px #c7d2fe;
-    }
-
-    .user-buttons {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-    }
-    .user-buttons button {
-      flex: 1;
-      background: #6366f1;
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 14px;
-      padding: 0.85rem 0;
-      font-size: 1.1rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      user-select: none;
-      box-shadow: 0 4px 8px rgb(99 102 241 / 0.4);
-      transition: background-color 0.3s ease;
-    }
-    .user-buttons button:hover {
-      background: #4f46e5;
-      box-shadow: 0 6px 12px rgb(79 70 229 / 0.6);
-    }
-    .user-buttons i {
-      font-style: normal;
-      font-size: 1.3rem;
-    }
-
-    button.submit {
-      margin-top: 1.4rem;
-      width: 100%;
-      background: #22c55e;
-      border: none;
-      border-radius: 18px;
-      padding: 1rem;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 6px 12px rgb(34 197 94 / 0.45);
-      transition: background-color 0.3s ease;
-      user-select: none;
-    }
-    button.submit:hover {
-      background: #16a34a;
-      box-shadow: 0 8px 14px rgb(22 163 74 / 0.6);
-    }
-
-    button.mic-btn {
-      margin-top: 1rem;
-      width: 100%;
-      background: #facc15;
-      border: none;
-      border-radius: 18px;
-      padding: 1rem;
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: #1a1a1a;
-      cursor: pointer;
-      box-shadow: 0 6px 12px rgb(250 204 21 / 0.6);
-      transition: background-color 0.3s ease;
-      user-select: none;
-    }
-    button.mic-btn:hover {
-      background: #ca8a04;
-      box-shadow: 0 8px 14px rgb(202 138 4 / 0.8);
-    }
-
-    .debug {
-      font-size: 0.85rem;
-      color: #555;
-      margin-top: 0.5rem;
-      min-height: 20px;
-      user-select: none;
-      font-family: monospace;
-    }
-
-    .log-entry, .history-entry {
-      background: white;
-      border-radius: 14px;
-      padding: 0.85rem 1rem;
-      margin: 0.5rem 0;
-      box-shadow: 0 3px 7px rgb(0 0 0 / 0.08);
-      user-select: text;
-      transition: box-shadow 0.3s ease;
-      position: relative;
-    }
-    .log-entry:hover, .history-entry:hover {
-      box-shadow: 0 6px 14px rgb(0 0 0 / 0.15);
-    }
-
-    .log-header {
-      font-weight: 700;
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      color: #374151;
-      user-select: none;
-    }
-
-    .filter-row {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-      user-select: none;
-    }
-    .filter-row select {
-      flex: 1;
-    }
-
-    #addWorkoutSection {
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 4px 10px rgb(0 0 0 / 0.05);
-      padding: 1rem 1.25rem;
-      margin: 1.5rem 0 2rem;
-    }
-    #addWorkoutSection label {
-      margin-top: 0;
-    }
-    #addWorkoutSection input {
-      margin-top: 0.4rem;
-      margin-bottom: 0.8rem;
-    }
-    #addWorkoutSection button {
-      background: #4f46e5;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      padding: 0.9rem 1rem;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      box-shadow: 0 6px 12px rgb(79 70 229 / 0.5);
-      transition: background-color 0.3s ease;
-      width: 100%;
-      user-select: none;
-    }
-    #addWorkoutSection button:hover {
-      background: #3730a3;
-      box-shadow: 0 8px 15px rgb(55 48 163 / 0.7);
-    }
-
-    .log-detail {
-      margin: 0.25rem 0;
-      padding: 0.3rem 0.5rem;
-      border-radius: 8px;
-      background: #f8fafc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .edit-btn {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 0.9rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .edit-btn:hover {
-      background: #2563eb;
-    }
-
-    .edit-form {
-      background: #f0f9ff;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-top: 0.5rem;
-      border: 1px solid #bae6fd;
-    }
-
-    .edit-form .form-row {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .edit-form .form-row input {
-      flex: 1;
-      padding: 0.6rem 0.8rem;
-      font-size: 0.95rem;
-    }
-
-    .edit-form .form-actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: flex-end;
-    }
-
-    .edit-form button {
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .edit-form .save-btn {
-      background: #10b981;
-      color: white;
-    }
-
-    .edit-form .cancel-btn {
-      background: #f3f4f6;
-      color: #4b5563;
-    }
-
-    .log-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .log-group h4 {
-      margin: 0 0 0.5rem 0;
-      color: #4f46e5;
-    }
-
-    .log-group strong {
-      display: block;
-      margin-top: 0.5rem;
-    }
-
-    .log-group em {
-      display: block;
-      margin: 0.3rem 0;
-      font-style: normal;
-      color: #64748b;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1rem;
-      color: #64748b;
-      font-size: 0.9rem;
-      background: white;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .version {
-      font-weight: 600;
-      color: #4f46e5;
-      margin-left: 0.25rem;
-    }
-
-    @media (max-width: 480px) {
-      main {
-        padding: 1rem 1rem 3rem;
-      }
-      nav button {
-        font-size: 1rem;
-        padding: 0.5rem 1rem;
-      }
-      .user-buttons button {
-        font-size: 1rem;
-        padding: 0.75rem 0;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Log App</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4338ca;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --gray: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #818cf8, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tabs {
+            display: flex;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: var(--light);
+            background: rgba(99, 102, 241, 0.2);
+            border-bottom: 3px solid var(--primary);
+        }
+        
+        .tab-content {
+            padding: 20px;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        .user-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .user-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .user-btn.active {
+            background: var(--primary-dark);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--gray);
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            color: var(--light);
+            font-size: 1rem;
+        }
+        
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .input-row > div {
+            flex: 1;
+        }
+        
+        .action-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+        }
+        
+        .btn-success {
+            background: var(--success);
+        }
+        
+        .btn-mic {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--primary);
+        }
+        
+        .log-container {
+            margin-top: 20px;
+        }
+        
+        .log-group {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .log-group h4 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .log-group strong {
+            display: block;
+            margin: 10px 0 5px;
+            color: var(--light);
+            font-size: 1.1rem;
+        }
+        
+        .log-group em {
+            display: block;
+            margin: 5px 0;
+            color: var(--gray);
+            font-style: normal;
+        }
+        
+        .log-entry {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .log-detail {
+            flex: 1;
+        }
+        
+        .edit-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+        }
+        
+        .edit-form {
+            margin-top: 10px;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 8px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .form-row input {
+            flex: 1;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .debug {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: var(--gray);
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filters > div {
+            flex: 1;
+        }
+        
+        .add-workout {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .add-workout input {
+            flex: 1;
+        }
+        
+        @media (max-width: 600px) {
+            .input-row, .action-row, .filters, .add-workout {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>🏋️ Gym Tracker</header>
-  <nav>
-    <button id="navHome" class="active">🏠 Home</button>
-    <button id="navHistory">📜 History</button>
-  </nav>
-
-  <main>
-    <section id="home" class="active">
-      <label for="workoutSelect">Workout</label>
-      <select id="workoutSelect" aria-label="Select Workout">
-        </select>
-
-      <div id="addWorkoutSection">
-        <label for="newWorkoutInput">Add New Workout</label>
-        <input type="text" id="newWorkoutInput" placeholder="e.g., Deadlift" aria-label="New Workout Name" />
-        <button id="addWorkoutBtn">➕ Add Workout</button>
-      </div>
-
-      <div class="user-buttons" role="group" aria-label="Select user">
-        <button id="btnSelim"><i>👤</i> Selim</button>
-        <button id="btnFriend"><i>👥</i> Friend</button>
-      </div>
-
-      <label for="weight">Weight (kg)</label>
-      <input id="weight" type="number" min="0" inputmode="decimal" aria-label="Weight in kilograms" />
-
-      <label for="reps">Reps</label>
-      <input id="reps" type="number" min="0" inputmode="numeric" aria-label="Number of repetitions" />
-
-      <label for="rpe">Difficulty (RPE)</label>
-      <input id="rpe" type="number" min="1" max="10" inputmode="numeric" aria-label="Rate of Perceived Exertion" />
-
-      <button class="submit" id="submitSet">➕ Add Set</button>
-      <button class="mic-btn" id="micBtn">🎤 Voice Input</button>
-
-      <div class="debug" id="debug" aria-live="polite"></div>
-
-      <h3 style="margin-top: 2rem; color:#374151;">Today's Log</h3>
-      <div id="today-log" aria-live="polite" aria-relevant="additions"></div>
-    </section>
-
-    <section id="history" aria-label="Workout history">
-      <div class="filter-row">
-        <select id="dateFilter" aria-label="Filter by date"></select>
-        <select id="workoutFilter" aria-label="Filter by workout"></select>
-      </div>
-      <div id="history-log"></div>
-    </section>
-  </main>
-
-  <footer>Gym Tracker <span class="version">v1.6</span></footer>
-
-  <script>
-   // Persistent data keys
-const LOGS_KEY = 'workoutLog';
-const WORKOUTS_KEY = 'exercises';
-const SET_COUNTS_KEY = 'setCounts';
-
-// Variables
-const today = new Date().toISOString().split("T")[0];
-let workoutLog = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
-let exercises = JSON.parse(localStorage.getItem(WORKOUTS_KEY)) || ["Bench Press", "Squat", "Deadlift", "Leg Press"];
-let setCounts = JSON.parse(localStorage.getItem(SET_COUNTS_KEY)) || {};
-let currentExercise = '';
-let currentUser = '';
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Get DOM elements
-  const workoutSelect = document.getElementById('workoutSelect');
-  const newWorkoutInput = document.getElementById('newWorkoutInput');
-  const addWorkoutBtn = document.getElementById('addWorkoutBtn');
-  const debugEl = document.getElementById('debug');
-  const todayLogEl = document.getElementById('today-log');
-  const historyLogEl = document.getElementById('history-log');
-  const dateFilter = document.getElementById('dateFilter');
-  const workoutFilter = document.getElementById('workoutFilter');
-  const btnSelim = document.getElementById('btnSelim');
-  const btnFriend = document.getElementById('btnFriend');
-  const navHome = document.getElementById('navHome');
-  const navHistory = document.getElementById('navHistory');
-  const submitSetBtn = document.getElementById('submitSet');
-  const micBtn = document.getElementById('micBtn');
-
-  // Initialize app
-  updateWorkoutDropdowns();
-  renderTodayLog();
-  setupFilters();
-
-  // ======================
-  // **EVENT DELEGATION FOR EDIT BUTTONS (FIXED)**
-  // ======================
-  document.addEventListener('click', (e) => {
-    // **Handle Edit Button Click**
-    if (e.target.classList.contains('edit-btn')) {
-      const logEntry = e.target.closest('.log-entry');
-      if (!logEntry) return;
-
-      // Close any other open edit forms first
-      document.querySelectorAll('.edit-form').forEach(form => form.remove());
-
-      // Get the set ID and data
-      const setId = parseInt(logEntry.dataset.id);
-      const setData = workoutLog.find(s => s.id === setId);
-      if (!setData) return;
-
-      // Create and insert the edit form
-      const editForm = document.createElement('div');
-      editForm.className = 'edit-form';
-      editForm.innerHTML = `
-        <div class="form-row">
-          <input type="number" value="${setData.weight}" min="0" step="0.5" placeholder="Weight">
-          <input type="number" value="${setData.reps}" min="1" placeholder="Reps">
-          <input type="number" value="${setData.rpe}" min="1" max="10" placeholder="RPE">
-        </div>
-        <div class="form-actions">
-          <button class="save-btn">💾 Save</button>
-          <button class="cancel-btn">✕ Cancel</button>
-        </div>
-      `;
-
-      logEntry.appendChild(editForm);
-    }
-
-    // **Handle Save Button Click**
-    if (e.target.classList.contains('save-btn')) {
-      const editForm = e.target.closest('.edit-form');
-      if (!editForm) return;
-
-      const logEntry = editForm.closest('.log-entry');
-      const setId = parseInt(logEntry.dataset.id);
-
-      const inputs = editForm.querySelectorAll('input');
-      const newWeight = inputs[0].value;
-      const newReps = inputs[1].value;
-      const newRpe = inputs[2].value;
-
-      updateSet(setId, newWeight, newReps, newRpe);
-    }
-
-    // **Handle Cancel Button Click**
-    if (e.target.classList.contains('cancel-btn')) {
-      const editForm = e.target.closest('.edit-form');
-      if (editForm) editForm.remove();
-    }
-  });
-
-  // ======================
-  // **CORE FUNCTIONS**
-  // ======================
-  function updateWorkoutDropdowns() {
-    [workoutSelect, workoutFilter].forEach(select => {
-      select.innerHTML = '<option value="">-- Select Exercise --</option>';
-      exercises.forEach(workout => {
-        const option = document.createElement('option');
-        option.value = workout;
-        option.textContent = workout;
-        select.appendChild(option);
-      });
-    });
-  }
-
-  function addWorkout() {
-    const newWorkout = newWorkoutInput.value.trim();
-    if (!newWorkout) return alert('Please enter a workout name.');
-    if (exercises.includes(newWorkout)) return alert('Workout already exists.');
-
-    exercises.push(newWorkout);
-    localStorage.setItem(WORKOUTS_KEY, JSON.stringify(exercises));
-    updateWorkoutDropdowns();
-    newWorkoutInput.value = '';
-    workoutSelect.value = newWorkout;
-    handleExerciseChange(newWorkout);
-    logDebug(`🏋️ Added workout: ${newWorkout}`);
-  }
-
-  function handleExerciseChange(name) {
-    currentExercise = name;
-  }
-
-  function selectUser(user) {
-    currentUser = user;
-    logDebug(`✅ Selected user: ${user}`);
-    btnSelim.style.backgroundColor = user === 'Selim' ? '#4338ca' : '#6366f1';
-    btnFriend.style.backgroundColor = user === 'Friend' ? '#4338ca' : '#6366f1';
-  }
-
-  function submitSet() {
-    const weight = document.getElementById('weight').value;
-    const reps = document.getElementById('reps').value;
-    const rpe = document.getElementById('rpe').value;
-    
-    if (!currentUser) return alert("Please select a user.");
-    if (!currentExercise) return alert("Please select a workout.");
-    if (!weight || !reps || !rpe) return alert("Please fill all fields.");
-
-    const key = `${currentUser}_${currentExercise}`;
-    const setNum = setCounts[key] || 1;
-    const setId = Date.now();
-    
-    const entry = { 
-      id: setId,
-      user: currentUser, 
-      exercise: currentExercise, 
-      set: setNum, 
-      weight, 
-      reps, 
-      rpe, 
-      date: today 
-    };
-    
-    workoutLog.push(entry);
-    setCounts[key] = setNum + 1;
-    
-    localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
-    localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
-    
-    clearSetInputs();
-    renderTodayLog();
-    logDebug(`➕ Set added: ${currentUser} - ${currentExercise} - ${weight}kg × ${reps} reps (RPE ${rpe})`);
-  }
-
-  function clearSetInputs() {
-    document.getElementById('weight').value = '';
-    document.getElementById('reps').value = '';
-    document.getElementById('rpe').value = '';
-  }
-
-  function renderTodayLog() {
-    todayLogEl.innerHTML = '';
-    const todayWorkouts = workoutLog.filter(log => log.date === today);
-    
-    if (todayWorkouts.length === 0) {
-      todayLogEl.textContent = 'No logs for today yet.';
-      return;
-    }
-
-    const grouped = groupWorkouts(todayWorkouts);
-    renderWorkoutLog(todayLogEl, grouped);
-  }
-
-  function renderHistory() {
-    historyLogEl.innerHTML = '';
-    const filteredWorkouts = workoutLog.filter(log => {
-      const matchesExercise = !workoutFilter.value || log.exercise === workoutFilter.value;
-      const matchesDate = !dateFilter.value || log.date === dateFilter.value;
-      return matchesExercise && matchesDate;
-    });
-
-    if (filteredWorkouts.length === 0) {
-      historyLogEl.textContent = 'No history entries found for selected filters.';
-      return;
-    }
-
-    const grouped = groupWorkouts(filteredWorkouts);
-    renderWorkoutLog(historyLogEl, grouped);
-  }
-
-  function groupWorkouts(workouts) {
-    const grouped = {};
-    workouts.forEach(workout => {
-      if (!grouped[workout.date]) grouped[workout.date] = {};
-      if (!grouped[workout.date][workout.user]) grouped[workout.date][workout.user] = {};
-      if (!grouped[workout.date][workout.user][workout.exercise]) {
-        grouped[workout.date][workout.user][workout.exercise] = [];
-      }
-      grouped[workout.date][workout.user][workout.exercise].push(workout);
-    });
-    return grouped;
-  }
-
-  function renderWorkoutLog(container, groupedData) {
-    for (const date in groupedData) {
-      const dateGroup = document.createElement("div");
-      dateGroup.className = "log-group";
-      dateGroup.innerHTML = `<h4>${date}</h4>`;
-      
-      for (const user in groupedData[date]) {
-        dateGroup.innerHTML += `<strong>${user}</strong>`;
+    <div class="container">
+        <header>
+            <h1>🏋️ Workout Log</h1>
+            <div class="debug" id="debug">App initialized...</div>
+        </header>
         
-        for (const exercise in groupedData[date][user]) {
-          dateGroup.innerHTML += `<em>${exercise}</em>`;
-          
-          groupedData[date][user][exercise].forEach(set => {
-            const entry = document.createElement("div");
-            entry.className = "log-entry";
-            entry.dataset.id = set.id;
-            entry.innerHTML = `
-              <div class="log-detail">
-                <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
-                <button class="edit-btn">✏️</button>
-              </div>
-            `;
-            dateGroup.appendChild(entry);
-          });
-        }
-      }
-      container.appendChild(dateGroup);
-    }
-  }
+        <div class="tabs">
+            <button class="tab-btn active" id="navHome">Home</button>
+            <button class="tab-btn" id="navHistory">History</button>
+        </div>
+        
+        <div class="tab-content">
+            <!-- Home Tab -->
+            <div class="tab-pane active" id="home">
+                <div class="user-select">
+                    <button class="user-btn" id="btnSelim">Selim</button>
+                    <button class="user-btn" id="btnFriend">Friend</button>
+                </div>
+                
+                <div class="add-workout">
+                    <input type="text" id="newWorkoutInput" placeholder="Add new exercise">
+                    <button class="btn" id="addWorkoutBtn">Add Exercise</button>
+                </div>
+                
+                <div class="form-group">
+                    <label for="workoutSelect">Select Exercise</label>
+                    <select id="workoutSelect">
+                        <option value="">-- Select Exercise --</option>
+                    </select>
+                </div>
+                
+                <div class="input-row">
+                    <div>
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" min="0" step="0.5" placeholder="e.g. 70">
+                    </div>
+                    <div>
+                        <label for="reps">Reps</label>
+                        <input type="number" id="reps" min="1" placeholder="e.g. 8">
+                    </div>
+                    <div>
+                        <label for="rpe">RPE</label>
+                        <input type="number" id="rpe" min="1" max="10" placeholder="1-10">
+                    </div>
+                </div>
+                
+                <div class="action-row">
+                    <button class="btn btn-success" id="submitSet">
+                        <span>💾 Save Set</span>
+                    </button>
+                    <button class="btn btn-mic" id="micBtn">
+                        <span>🎤 Voice Input</span>
+                    </button>
+                </div>
+                
+                <div class="log-container">
+                    <h3>Today's Workout</h3>
+                    <div id="today-log"></div>
+                </div>
+            </div>
+            
+            <!-- History Tab -->
+            <div class="tab-pane" id="history">
+                <div class="filters">
+                    <div>
+                        <label for="dateFilter">Date</label>
+                        <select id="dateFilter">
+                            <option value="">All Dates</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="workoutFilter">Exercise</label>
+                        <select id="workoutFilter">
+                            <option value="">All Workouts</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="log-container">
+                    <h3>Workout History</h3>
+                    <div id="history-log"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-  function updateSet(setId, weight, reps, rpe) {
-    const setIndex = workoutLog.findIndex(s => s.id === setId);
-    if (setIndex === -1) return;
+    <script>
+        // Persistent data keys
+        const LOGS_KEY = 'workoutLog';
+        const WORKOUTS_KEY = 'exercises';
+        const SET_COUNTS_KEY = 'setCounts';
 
-    workoutLog[setIndex].weight = weight;
-    workoutLog[setIndex].reps = reps;
-    workoutLog[setIndex].rpe = rpe;
-    
-    localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
-    
-    if (document.getElementById('home').classList.contains('active')) {
-      renderTodayLog();
-    } else {
-      renderHistory();
-    }
-    
-    logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
-  }
+        // Variables
+        const today = new Date().toISOString().split("T")[0];
+        let workoutLog = JSON.parse(localStorage.getItem(LOGS_KEY)) || [];
+        let exercises = JSON.parse(localStorage.getItem(WORKOUTS_KEY)) || ["Bench Press", "Squat", "Deadlift", "Leg Press"];
+        let setCounts = JSON.parse(localStorage.getItem(SET_COUNTS_KEY)) || {};
+        let currentExercise = '';
+        let currentUser = '';
 
-  function setupFilters() {
-    const uniqueDates = [...new Set(workoutLog.map(log => log.date))].sort().reverse();
-    dateFilter.innerHTML = '<option value="">All Dates</option>';
-    uniqueDates.forEach(date => {
-      const option = document.createElement('option');
-      option.value = date;
-      option.textContent = date;
-      dateFilter.appendChild(option);
-    });
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get DOM elements
+            const workoutSelect = document.getElementById('workoutSelect');
+            const newWorkoutInput = document.getElementById('newWorkoutInput');
+            const addWorkoutBtn = document.getElementById('addWorkoutBtn');
+            const debugEl = document.getElementById('debug');
+            const todayLogEl = document.getElementById('today-log');
+            const historyLogEl = document.getElementById('history-log');
+            const dateFilter = document.getElementById('dateFilter');
+            const workoutFilter = document.getElementById('workoutFilter');
+            const btnSelim = document.getElementById('btnSelim');
+            const btnFriend = document.getElementById('btnFriend');
+            const navHome = document.getElementById('navHome');
+            const navHistory = document.getElementById('navHistory');
+            const submitSetBtn = document.getElementById('submitSet');
+            const micBtn = document.getElementById('micBtn');
 
-    const uniqueWorkouts = [...new Set(workoutLog.map(log => log.exercise))].sort();
-    workoutFilter.innerHTML = '<option value="">All Workouts</option>';
-    uniqueWorkouts.forEach(workout => {
-      const option = document.createElement('option');
-      option.value = workout;
-      option.textContent = workout;
-      workoutFilter.appendChild(option);
-    });
+            // Initialize app
+            updateWorkoutDropdowns();
+            renderTodayLog();
+            setupFilters();
 
-    dateFilter.addEventListener('change', renderHistory);
-    workoutFilter.addEventListener('change', renderHistory);
-  }
+            // ======================
+            // **EVENT DELEGATION FOR EDIT BUTTONS (FIXED)**
+            // ======================
+            document.addEventListener('click', (e) => {
+                // **Handle Edit Button Click**
+                if (e.target.classList.contains('edit-btn')) {
+                    const logEntry = e.target.closest('.log-entry');
+                    if (!logEntry) return;
 
-  function logDebug(msg) {
-    debugEl.textContent = msg;
-  }
+                    // Close any other open edit forms first
+                    document.querySelectorAll('.edit-form').forEach(form => form.remove());
 
-  function startListening() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return alert("🚫 Voice recognition not supported in this browser.");
+                    // Get the set ID and data
+                    const setId = parseInt(logEntry.dataset.id);
+                    const setData = workoutLog.find(s => s.id === setId);
+                    if (!setData) return;
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognition.start();
+                    // Create and insert the edit form
+                    const editForm = document.createElement('div');
+                    editForm.className = 'edit-form';
+                    editForm.innerHTML = `
+                        <div class="form-row">
+                            <input type="number" value="${setData.weight}" min="0" step="0.5" placeholder="Weight">
+                            <input type="number" value="${setData.reps}" min="1" placeholder="Reps">
+                            <input type="number" value="${setData.rpe}" min="1" max="10" placeholder="RPE">
+                        </div>
+                        <div class="form-actions">
+                            <button class="save-btn">💾 Save</button>
+                            <button class="cancel-btn">✕ Cancel</button>
+                        </div>
+                    `;
 
-    logDebug("🎤 Listening...");
+                    logEntry.appendChild(editForm);
+                }
 
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
-      logDebug(`🗣 Heard: "${transcript}"`);
+                // **Handle Save Button Click**
+                if (e.target.classList.contains('save-btn')) {
+                    const editForm = e.target.closest('.edit-form');
+                    if (!editForm) return;
 
-      const parts = transcript.split(/\s+/)
-        .map(word => isNaN(word) ? (word === 'to' ? 2 : word === 'for' ? 4 : NaN) : +word)
-        .filter(n => !isNaN(n));
+                    const logEntry = editForm.closest('.log-entry');
+                    const setId = parseInt(logEntry.dataset.id);
 
-      if (parts.length >= 3) {
-        document.getElementById('weight').value = parts[0];
-        document.getElementById('reps').value = parts[1];
-        document.getElementById('rpe').value = parts[2];
-        submitSet();
-      } else {
-        logDebug("❌ Could not extract weight, reps, and RPE from voice input.");
-      }
-    };
+                    const inputs = editForm.querySelectorAll('input');
+                    const newWeight = inputs[0].value;
+                    const newReps = inputs[1].value;
+                    const newRpe = inputs[2].value;
 
-    recognition.onerror = (e) => logDebug("⚠️ Voice error: " + e.error);
-    recognition.onend = () => logDebug("🎤 Voice recognition ended.");
-  }
+                    updateSet(setId, newWeight, newReps, newRpe);
+                }
 
-  function switchTab(tab) {
-    const home = document.getElementById('home');
-    const history = document.getElementById('history');
+                // **Handle Cancel Button Click**
+                if (e.target.classList.contains('cancel-btn')) {
+                    const editForm = e.target.closest('.edit-form');
+                    if (editForm) editForm.remove();
+                }
+            });
 
-    if (tab === 'home') {
-      home.classList.add('active');
-      history.classList.remove('active');
-      navHome.classList.add('active');
-      navHistory.classList.remove('active');
-      renderTodayLog();
-    } else {
-      home.classList.remove('active');
-      history.classList.add('active');
-      navHome.classList.remove('active');
-      navHistory.classList.add('active');
-      renderHistory();
-    }
-  }
+            // ======================
+            // **CORE FUNCTIONS**
+            // ======================
+            function updateWorkoutDropdowns() {
+                [workoutSelect, workoutFilter].forEach(select => {
+                    select.innerHTML = '<option value="">-- Select Exercise --</option>';
+                    exercises.forEach(workout => {
+                        const option = document.createElement('option');
+                        option.value = workout;
+                        option.textContent = workout;
+                        select.appendChild(option);
+                    });
+                });
+            }
 
-  // Event listeners
-  addWorkoutBtn.addEventListener('click', addWorkout);
-  btnSelim.addEventListener('click', () => selectUser('Selim'));
-  btnFriend.addEventListener('click', () => selectUser('Friend'));
-  submitSetBtn.addEventListener('click', submitSet);
-  micBtn.addEventListener('click', startListening);
-  navHome.addEventListener('click', () => switchTab('home'));
-  navHistory.addEventListener('click', () => switchTab('history'));
-  workoutSelect.addEventListener('change', (e) => handleExerciseChange(e.target.value));
+            function addWorkout() {
+                const newWorkout = newWorkoutInput.value.trim();
+                if (!newWorkout) return alert('Please enter a workout name.');
+                if (exercises.includes(newWorkout)) return alert('Workout already exists.');
 
-  logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
-});
-  </script>
+                exercises.push(newWorkout);
+                localStorage.setItem(WORKOUTS_KEY, JSON.stringify(exercises));
+                updateWorkoutDropdowns();
+                newWorkoutInput.value = '';
+                workoutSelect.value = newWorkout;
+                handleExerciseChange(newWorkout);
+                logDebug(`🏋️ Added workout: ${newWorkout}`);
+            }
+
+            function handleExerciseChange(name) {
+                currentExercise = name;
+            }
+
+            function selectUser(user) {
+                currentUser = user;
+                logDebug(`✅ Selected user: ${user}`);
+                btnSelim.style.backgroundColor = user === 'Selim' ? '#4338ca' : '#6366f1';
+                btnFriend.style.backgroundColor = user === 'Friend' ? '#4338ca' : '#6366f1';
+            }
+
+            function submitSet() {
+                const weight = document.getElementById('weight').value;
+                const reps = document.getElementById('reps').value;
+                const rpe = document.getElementById('rpe').value;
+                
+                if (!currentUser) return alert("Please select a user.");
+                if (!currentExercise) return alert("Please select a workout.");
+                if (!weight || !reps || !rpe) return alert("Please fill all fields.");
+
+                const key = `${currentUser}_${currentExercise}`;
+                const setNum = setCounts[key] || 1;
+                const setId = Date.now();
+                
+                const entry = { 
+                    id: setId,
+                    user: currentUser, 
+                    exercise: currentExercise, 
+                    set: setNum, 
+                    weight, 
+                    reps, 
+                    rpe, 
+                    date: today 
+                };
+                
+                workoutLog.push(entry);
+                setCounts[key] = setNum + 1;
+                
+                localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
+                localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
+                
+                clearSetInputs();
+                renderTodayLog();
+                logDebug(`➕ Set added: ${currentUser} - ${currentExercise} - ${weight}kg × ${reps} reps (RPE ${rpe})`);
+            }
+
+            function clearSetInputs() {
+                document.getElementById('weight').value = '';
+                document.getElementById('reps').value = '';
+                document.getElementById('rpe').value = '';
+            }
+
+            function renderTodayLog() {
+                todayLogEl.innerHTML = '';
+                const todayWorkouts = workoutLog.filter(log => log.date === today);
+                
+                if (todayWorkouts.length === 0) {
+                    todayLogEl.textContent = 'No logs for today yet.';
+                    return;
+                }
+
+                const grouped = groupWorkouts(todayWorkouts);
+                renderWorkoutLog(todayLogEl, grouped);
+            }
+
+            function renderHistory() {
+                historyLogEl.innerHTML = '';
+                const filteredWorkouts = workoutLog.filter(log => {
+                    const matchesExercise = !workoutFilter.value || log.exercise === workoutFilter.value;
+                    const matchesDate = !dateFilter.value || log.date === dateFilter.value;
+                    return matchesExercise && matchesDate;
+                });
+
+                if (filteredWorkouts.length === 0) {
+                    historyLogEl.textContent = 'No history entries found for selected filters.';
+                    return;
+                }
+
+                const grouped = groupWorkouts(filteredWorkouts);
+                renderWorkoutLog(historyLogEl, grouped);
+            }
+
+            function groupWorkouts(workouts) {
+                const grouped = {};
+                workouts.forEach(workout => {
+                    if (!grouped[workout.date]) grouped[workout.date] = {};
+                    if (!grouped[workout.date][workout.user]) grouped[workout.date][workout.user] = {};
+                    if (!grouped[workout.date][workout.user][workout.exercise]) {
+                        grouped[workout.date][workout.user][workout.exercise] = [];
+                    }
+                    grouped[workout.date][workout.user][workout.exercise].push(workout);
+                });
+                return grouped;
+            }
+
+            function renderWorkoutLog(container, groupedData) {
+                for (const date in groupedData) {
+                    const dateGroup = document.createElement("div");
+                    dateGroup.className = "log-group";
+                    dateGroup.innerHTML = `<h4>${date}</h4>`;
+                    
+                    for (const user in groupedData[date]) {
+                        dateGroup.innerHTML += `<strong>${user}</strong>`;
+                        
+                        for (const exercise in groupedData[date][user]) {
+                            dateGroup.innerHTML += `<em>${exercise}</em>`;
+                            
+                            groupedData[date][user][exercise].forEach(set => {
+                                const entry = document.createElement("div");
+                                entry.className = "log-entry";
+                                entry.dataset.id = set.id;
+                                entry.innerHTML = `
+                                    <div class="log-detail">
+                                        <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
+                                        <button class="edit-btn">✏️</button>
+                                    </div>
+                                `;
+                                dateGroup.appendChild(entry);
+                            });
+                        }
+                    }
+                    container.appendChild(dateGroup);
+                }
+            }
+
+            function updateSet(setId, weight, reps, rpe) {
+                const setIndex = workoutLog.findIndex(s => s.id === setId);
+                if (setIndex === -1) return;
+
+                workoutLog[setIndex].weight = weight;
+                workoutLog[setIndex].reps = reps;
+                workoutLog[setIndex].rpe = rpe;
+                
+                localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
+                
+                if (document.getElementById('home').classList.contains('active')) {
+                    renderTodayLog();
+                } else {
+                    renderHistory();
+                }
+                
+                logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
+            }
+
+            function setupFilters() {
+                const uniqueDates = [...new Set(workoutLog.map(log => log.date))].sort().reverse();
+                dateFilter.innerHTML = '<option value="">All Dates</option>';
+                uniqueDates.forEach(date => {
+                    const option = document.createElement('option');
+                    option.value = date;
+                    option.textContent = date;
+                    dateFilter.appendChild(option);
+                });
+
+                const uniqueWorkouts = [...new Set(workoutLog.map(log => log.exercise))].sort();
+                workoutFilter.innerHTML = '<option value="">All Workouts</option>';
+                uniqueWorkouts.forEach(workout => {
+                    const option = document.createElement('option');
+                    option.value = workout;
+                    option.textContent = workout;
+                    workoutFilter.appendChild(option);
+                });
+
+                dateFilter.addEventListener('change', renderHistory);
+                workoutFilter.addEventListener('change', renderHistory);
+            }
+
+            // ======================
+            // **IMPROVED DEBUG LOGGING**
+            // ======================
+            function logDebug(msg) {
+                // If the message is the same as the last one, don't duplicate
+                if (debugEl.textContent.endsWith(msg)) return;
+                
+                // Add new message with timestamp
+                const timestamp = new Date().toLocaleTimeString();
+                const newMessage = `[${timestamp}] ${msg}\n`;
+                
+                // Keep previous messages but limit to 5 lines
+                const currentContent = debugEl.textContent;
+                const lines = currentContent.split('\n').filter(l => l.trim());
+                if (lines.length >= 5) {
+                    lines.shift(); // Remove oldest message
+                }
+                
+                debugEl.textContent = lines.join('\n') + '\n' + newMessage;
+            }
+
+            // ======================
+            // **IMPROVED VOICE INPUT**
+            // ======================
+            function startListening() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    logDebug("🚫 Voice recognition not supported in this browser.");
+                    return;
+                }
+
+                // Clear previous "listening" message if any
+                const debugText = debugEl.textContent;
+                if (debugText.endsWith("Listening...")) {
+                    debugEl.textContent = debugText.replace("Listening...", "");
+                }
+
+                logDebug("🎤 Listening... (Speak now)");
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+                recognition.continuous = false;
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.toLowerCase();
+                    logDebug(`🗣 Heard: "${transcript}"`); // Keep this line
+                    
+                    // Process the transcript
+                    let text = transcript.replace(/kilograms?|kg/g, '')
+                                        .replace(/difficulty|rpe/g, '')
+                                        .replace(/stop/g, '')
+                                        .trim();
+
+                    // Number mapping
+                    const wordsToNumbers = {
+                        'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+                        'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+                        'ten': 10, 'eleven': 11, 'twelve': 12, 'for': 4, 'to': 2
+                    };
+
+                    const parts = text.split(/\s+/).map(word => {
+                        if (!isNaN(word)) return +word;
+                        return wordsToNumbers[word] !== undefined ? wordsToNumbers[word] : NaN;
+                    }).filter(n => !isNaN(n));
+
+                    // Handle commands
+                    if (transcript.includes('stop')) {
+                        if (!currentUser || !currentExercise) {
+                            logDebug("⚠️ Select user and workout before using 'stop'");
+                            return;
+                        }
+                        const key = `${currentUser}_${currentExercise}`;
+                        setCounts[key] = 1;
+                        localStorage.setItem(SET_COUNTS_KEY, JSON.stringify(setCounts));
+                        logDebug(`🛑 Reset set count for ${currentUser} - ${currentExercise}`);
+                        return;
+                    }
+
+                    // Process numbers
+                    if (parts.length >= 3) {
+                        document.getElementById('weight').value = parts[0];
+                        document.getElementById('reps').value = parts[1];
+                        document.getElementById('rpe').value = parts[2];
+                        logDebug(`✅ Processed: ${parts[0]}kg × ${parts[1]} reps (RPE ${parts[2]})`);
+                        submitSet();
+                    } else {
+                        logDebug("❌ Could not extract weight, reps, and RPE from voice input.");
+                    }
+                };
+
+                recognition.onerror = (e) => {
+                    logDebug(`⚠️ Voice error: ${e.error}`);
+                };
+
+                recognition.onend = () => {
+                    // Only add "ended" message if we're not already showing an error
+                    if (!debugEl.textContent.includes("Voice error")) {
+                        logDebug("🎤 Voice recognition ended.");
+                    }
+                };
+
+                recognition.start();
+            }
+
+            function switchTab(tab) {
+                const home = document.getElementById('home');
+                const history = document.getElementById('history');
+
+                if (tab === 'home') {
+                    home.classList.add('active');
+                    history.classList.remove('active');
+                    navHome.classList.add('active');
+                    navHistory.classList.remove('active');
+                    renderTodayLog();
+                } else {
+                    home.classList.remove('active');
+                    history.classList.add('active');
+                    navHome.classList.remove('active');
+                    navHistory.classList.add('active');
+                    renderHistory();
+                }
+            }
+
+            // Event listeners
+            addWorkoutBtn.addEventListener('click', addWorkout);
+            btnSelim.addEventListener('click', () => selectUser('Selim'));
+            btnFriend.addEventListener('click', () => selectUser('Friend'));
+            submitSetBtn.addEventListener('click', submitSet);
+            micBtn.addEventListener('click', startListening);
+            navHome.addEventListener('click', () => switchTab('home'));
+            navHistory.addEventListener('click', () => switchTab('history'));
+            workoutSelect.addEventListener('change', (e) => handleExerciseChange(e.target.value));
+
+            logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
+        });
+    </script>
 </body>
 </html>
