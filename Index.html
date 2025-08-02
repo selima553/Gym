@@ -387,8 +387,7 @@
     <section id="home" class="active">
       <label for="workoutSelect">Workout</label>
       <select id="workoutSelect" aria-label="Select Workout">
-        <!-- Options will be added dynamically -->
-      </select>
+        </select>
 
       <div id="addWorkoutSection">
         <label for="newWorkoutInput">Add New Workout</label>
@@ -428,10 +427,10 @@
     </section>
   </main>
 
-  <footer>Gym Tracker <span class="version">v1.5</span></footer>
+  <footer>Gym Tracker <span class="version">v1.2</span></footer>
 
   <script>
-       // Persistent data keys
+    // Persistent data keys
     const LOGS_KEY = 'workoutLog';
     const WORKOUTS_KEY = 'exercises';
     const SET_COUNTS_KEY = 'setCounts';
@@ -890,7 +889,6 @@
       // Initial debug info
       logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
     });
-
   </script>
 </body>
 </html>
