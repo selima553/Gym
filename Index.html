@@ -428,10 +428,10 @@
     </section>
   </main>
 
-  <footer>Gym Tracker <span class="version">v1.2</span></footer>
+  <footer>Gym Tracker <span class="version">v1.4</span></footer>
 
   <script>
-    // Persistent data keys
+     // Persistent data keys
     const LOGS_KEY = 'workoutLog';
     const WORKOUTS_KEY = 'exercises';
     const SET_COUNTS_KEY = 'setCounts';
@@ -443,7 +443,6 @@
     let setCounts = JSON.parse(localStorage.getItem(SET_COUNTS_KEY)) || {};
     let currentExercise = '';
     let currentUser = '';
-    let editingSetId = null;
     
     document.addEventListener('DOMContentLoaded', () => {
       // Get DOM elements
@@ -561,7 +560,7 @@
         document.getElementById('rpe').value = '';
       }
 
-      // Render today's log
+      // Render today's log - Corrected Logic
       function renderTodayLog() {
         const container = document.getElementById('today-log');
         container.innerHTML = '';
@@ -583,34 +582,54 @@
             group.innerHTML += `<strong>${ex}</strong>`;
             
             grouped[user][ex].forEach(set => {
-              if (editingSetId === set.id) {
-                // Show edit form for this specific set
-                const editDiv = document.createElement('div');
-                editDiv.className = 'edit-form';
-                editDiv.innerHTML = `
+              const entry = document.createElement("div");
+              entry.className = "log-entry";
+              entry.dataset.id = set.id;
+              entry.innerHTML = `
+                <div class="log-detail">
+                  <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
+                  <button class="edit-btn">✏️</button>
+                </div>
+              `;
+              
+              entry.querySelector('.edit-btn').addEventListener('click', (e) => {
+                // Find the set to edit
+                const setEntry = e.target.closest('.log-entry');
+                
+                // Only open one form at a time
+                if (setEntry.querySelector('.edit-form')) return;
+
+                // Create and insert the edit form
+                const form = document.createElement('div');
+                form.className = 'edit-form';
+                form.innerHTML = `
                   <div class="form-row">
-                    <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight" id="edit-weight-${set.id}">
-                    <input type="number" value="${set.reps}" min="1" placeholder="Reps" id="edit-reps-${set.id}">
-                    <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE" id="edit-rpe-${set.id}">
+                    <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
+                    <input type="number" value="${set.reps}" min="1" placeholder="Reps">
+                    <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
                   </div>
                   <div class="form-actions">
-                    <button class="save-btn" onclick="updateSet(${set.id}, document.getElementById('edit-weight-${set.id}').value, document.getElementById('edit-reps-${set.id}').value, document.getElementById('edit-rpe-${set.id}').value)">💾 Save</button>
-                    <button class="cancel-btn" onclick="cancelEdit()">✕ Cancel</button>
+                    <button class="save-btn">💾 Save</button>
+                    <button class="cancel-btn">✕ Cancel</button>
                   </div>
                 `;
-                group.appendChild(editDiv);
-              } else {
-                // Show normal set entry
-                const entry = document.createElement("div");
-                entry.className = "log-entry";
-                entry.innerHTML = `
-                  <div class="log-detail">
-                    <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
-                    <button class="edit-btn" onclick="editSet(${set.id})">✏️</button>
-                  </div>
-                `;
-                group.appendChild(entry);
-              }
+                
+                setEntry.appendChild(form);
+
+                form.querySelector('.save-btn').addEventListener('click', () => {
+                  const newWeight = form.querySelector('input:nth-child(1)').value;
+                  const newReps = form.querySelector('input:nth-child(2)').value;
+                  const newRpe = form.querySelector('input:nth-child(3)').value;
+                  updateSet(set.id, newWeight, newReps, newRpe);
+                });
+                
+                form.querySelector('.cancel-btn').addEventListener('click', () => {
+                  form.remove();
+                });
+                
+              });
+              
+              group.appendChild(entry);
             });
           }
           
@@ -622,31 +641,8 @@
         }
       }
 
-      // Edit a set
-      window.editSet = function(setId) {
-        editingSetId = setId;
-        renderTodayLog();
-        if (document.getElementById('history').classList.contains('active')) {
-          renderHistory();
-        }
-      }
-
-      // Cancel editing
-      window.cancelEdit = function() {
-        editingSetId = null;
-        renderTodayLog();
-        if (document.getElementById('history').classList.contains('active')) {
-          renderHistory();
-        }
-      }
-
       // Update a set
-      window.updateSet = function(setId, weight, reps, rpe) {
-        if (!weight || !reps || !rpe) {
-          alert('Please fill in all fields');
-          return;
-        }
-
+      function updateSet(setId, weight, reps, rpe) {
         // Find the set in workoutLog
         const setIndex = workoutLog.findIndex(s => s.id === setId);
         if (setIndex === -1) return;
@@ -659,14 +655,13 @@
         // Save to localStorage
         localStorage.setItem(LOGS_KEY, JSON.stringify(workoutLog));
         
-        // Reset editing state
-        editingSetId = null;
-        
-        // Re-render
-        renderTodayLog();
-        if (document.getElementById('history').classList.contains('active')) {
+        // Re-render the appropriate log
+        if(document.getElementById('home').classList.contains('active')) {
+          renderTodayLog();
+        } else {
           renderHistory();
         }
+        
         logDebug(`✅ Set updated: ${workoutLog[setIndex].user} - ${workoutLog[setIndex].exercise}`);
       }
 
@@ -697,7 +692,7 @@
         workoutFilter.addEventListener('change', renderHistory);
       }
 
-      // Render history log
+      // Render history log - Corrected Logic
       function renderHistory() {
         const filterEx = workoutFilter.value;
         const filterDate = dateFilter.value;
@@ -726,39 +721,57 @@
               dateGroup.innerHTML += `<em>${ex}</em>`;
               
               grouped[date][user][ex].forEach(set => {
-                if (editingSetId === set.id) {
-                  // Show edit form for this specific set
-                  const editDiv = document.createElement('div');
-                  editDiv.className = 'edit-form';
-                  editDiv.innerHTML = `
+                const entry = document.createElement("div");
+                entry.className = "log-entry";
+                entry.dataset.id = set.id;
+                entry.innerHTML = `
+                  <div class="log-detail">
+                    <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
+                    <button class="edit-btn">✏️</button>
+                  </div>
+                `;
+                
+                entry.querySelector('.edit-btn').addEventListener('click', (e) => {
+                  // Find the set to edit
+                  const setEntry = e.target.closest('.log-entry');
+                  
+                  // Only open one form at a time
+                  if (setEntry.querySelector('.edit-form')) return;
+
+                  // Create and insert the edit form
+                  const form = document.createElement('div');
+                  form.className = 'edit-form';
+                  form.innerHTML = `
                     <div class="form-row">
-                      <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight" id="edit-weight-${set.id}">
-                      <input type="number" value="${set.reps}" min="1" placeholder="Reps" id="edit-reps-${set.id}">
-                      <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE" id="edit-rpe-${set.id}">
+                      <input type="number" value="${set.weight}" min="0" step="0.5" placeholder="Weight">
+                      <input type="number" value="${set.reps}" min="1" placeholder="Reps">
+                      <input type="number" value="${set.rpe}" min="1" max="10" placeholder="RPE">
                     </div>
                     <div class="form-actions">
-                      <button class="save-btn" onclick="updateSet(${set.id}, document.getElementById('edit-weight-${set.id}').value, document.getElementById('edit-reps-${set.id}').value, document.getElementById('edit-rpe-${set.id}').value)">💾 Save</button>
-                      <button class="cancel-btn" onclick="cancelEdit()">✕ Cancel</button>
+                      <button class="save-btn">💾 Save</button>
+                      <button class="cancel-btn">✕ Cancel</button>
                     </div>
                   `;
-                  dateGroup.appendChild(editDiv);
-                } else {
-                  // Show normal set entry
-                  const entry = document.createElement("div");
-                  entry.className = "log-entry";
-                  entry.innerHTML = `
-                    <div class="log-detail">
-                      <span>Set ${set.set}: ${set.weight}kg × ${set.reps} (RPE ${set.rpe})</span>
-                      <button class="edit-btn" onclick="editSet(${set.id})">✏️</button>
-                    </div>
-                  `;
-                  dateGroup.appendChild(entry);
-                }
+                  
+                  setEntry.appendChild(form);
+
+                  form.querySelector('.save-btn').addEventListener('click', () => {
+                    const newWeight = form.querySelector('input:nth-child(1)').value;
+                    const newReps = form.querySelector('input:nth-child(2)').value;
+                    const newRpe = form.querySelector('input:nth-child(3)').value;
+                    updateSet(set.id, newWeight, newReps, newRpe);
+                  });
+                  
+                  form.querySelector('.cancel-btn').addEventListener('click', () => {
+                    form.remove();
+                  });
+                });
+                
+                dateGroup.appendChild(entry);
               });
             }
           }
           
-          dateGroup.appendChild(dateGroup);
           container.appendChild(dateGroup);
         }
         
@@ -852,14 +865,12 @@
           history.classList.remove('active');
           navHome.classList.add('active');
           navHistory.classList.remove('active');
-          editingSetId = null; // Reset editing when switching tabs
           renderTodayLog();
         } else {
           home.classList.remove('active');
           history.classList.add('active');
           navHome.classList.remove('active');
           navHistory.classList.add('active');
-          editingSetId = null; // Reset editing when switching tabs
           setupFilters();
           renderHistory();
         }
@@ -878,6 +889,7 @@
       // Initial debug info
       logDebug(`App initialized with ${exercises.length} workouts and ${workoutLog.length} log entries`);
     });
+
   </script>
 </body>
 </html>
